@@ -4,5 +4,18 @@ alwaysApply: true
 
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the current plan
+shell commands, and other important information, read the current plan:
+
+**Active feature**: `001-dhl-gantt-chart`
+**Plan**: `specs/001-dhl-gantt-chart/plan.md`
+**Spec**: `specs/001-dhl-gantt-chart/spec.md`
+**Data model**: `specs/001-dhl-gantt-chart/data-model.md`
+**Research**: `specs/001-dhl-gantt-chart/research.md`
+**Quickstart**: `specs/001-dhl-gantt-chart/quickstart.md`
+**Contracts**: `specs/001-dhl-gantt-chart/contracts/`
+
+Tech stack: Mendix 10.24.9 Pluggable Widget, TypeScript, React 19, mobx-react-lite, dhtmlxGantt (trial→commercial).
+Architecture: **Multiple Dimensions** (DimensionStore + dimensionSlicer) — Time, Site, Project, Resource, SourceSystem, Department, Status.
+Key features: full dhtmlxGantt STD+PRO feature matrix, multi-source datasource, mock data + loading, click-to-detail dialog, drag-drop, timeline zoom, link editing.
+Contracts: `contracts/dhtmlx-feature-matrix.md`, `contracts/multi-dimensional-model.md`.
 <!-- SPECKIT END -->

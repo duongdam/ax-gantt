@@ -1,58 +1,784 @@
 <?xml version="1.0" encoding="utf-8"?>
-<widget id="mendix.dhlganttchart.DhlGanttChart" pluginWidget="true" needsEntityContext="true" offlineCapable="true"
+<widget id="mendix.dhlganttchart.DhlGanttChart" pluginWidget="true" needsEntityContext="false" offlineCapable="true"
         supportedPlatform="Web"
         xmlns="http://www.mendix.com/widget/1.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.mendix.com/widget/1.0/ ../node_modules/mendix/custom_widget.xsd">
     <name>Dhl Gantt Chart</name>
-    <description>DHTMLX Gantt Chart</description>
+    <description>Multi-source DHTMLX Gantt chart with dimensional filtering and Mendix datasource integration</description>
     <icon>
         iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAABp1BMVEUAAABV//9mzP9LtP9Ms/9Jtv9NsvdJsfpLtPpJsfdJsfhJsvhJsvdKsvdJsPhKsPhJsfdJsPhJsfdIsfhJsfdIsPdJsfhJsfhJsPhJsPhIsfhIsPdJsPdKsPdKsfdNsvdOsvdPs/dQs/dRtPdStPdTtPdUtfdWtvdXtvdauPdcuPdeufdeufhguvhiu/hju/hkvPhmvfhnvfhpvvhrv/huwPhvwfhxwfhywvhzwvh4xfl5xfl6xfl8xvl9xvl9x/mByPmCyfmFyvmGyvmJzPmKzPmLzfmNzvqPzvqQz/qT0PqU0PqU0fqX0vqY0vqa0/qe1fqg1vqj1/uk1/un2fup2vut2/uv3Puw3Puw3fuz3vu13/u23/u34Pu44Pu64fu64fy84vy94vy+4/y/4/zD5fzE5fzG5vzH5vzI5/zK6PzL6PzR6/zT7P3U7P3V7f3W7f3Y7v3Z7v3c8P3e8f3f8f3g8f3i8v3l8/3l9P3n9P3r9v7t9/7u9/7v+P7w+P7x+f7y+f70+v71+v74/P75/P76/f77/f78/f78/v79/v7+/v7////6dMsRAAAAG3RSTlMAAwURGxwhMTNic3SEh4iVp7XBzejt7vH5/f6PsMNWAAABsklEQVR4AWIYfGAUjIJRMAqYuYREJKWJAqLCPGwY+jnFpEkBEryMqPr5pEkFgkwo9kuTDviR/S9GhgFSHAgDuKXJAQIIA4TIMkAcEY4i0mQBVrgBkuQZwA43QJo8wIFhQEhEOIBQOutHJozDOP5Crp4e1RhkJ0tKGJFd6oNEdtmJyEIzpaZl5nrRZgaHM/2Pf5/vwXXfyagXgG93bwSAlEolowLMm9w83gibhXH2gKKVdD67gTnWjwCk+VVjMQS4suSnnjMLRVFc9sAHvAX2A9fySaXNBMbEZVUWscaHIMRuqwBgD8hDEbnsRmfjUKJkAQZGCTlO/xWBwIADQLIZBlY441MvfoF1xlFS/4fy+bzXKh4dgNJE7L3eh3tmtuWa+AMcMIY3dgUvZQpGEYmMw2kD7HC+R29UqyoXLaBd0QZxzgXgikLLDSqJTKU5HOcS0MsbA9jPqtwCRvXm2eorBbNIJBw3KJ9O4Yl+AAXdnyaLt7PWN3jRWLvzmAVp94zO5+n41/onfo/UpExxZqI0O7NQr0DhIq9Io7hQpbRYp7hiobRqo6ByFcNWuY6CUTAKRgEAo8X0lBD3V30AAAAASUVORK5CYII=
     </icon>
     <properties>
+        <!-- Group 1: General -->
         <propertyGroup caption="General">
-            <property key="valueAttribute" type="attribute" required="false">
-                <caption>Value attribute</caption>
-                <description>The attribute that contains the dhlganttchart value</description>
+            <property key="viewMode" type="enumeration" defaultValue="project">
+                <caption>View mode</caption>
+                <description>Project schedule, resource timeline, or hybrid view</description>
+                <enumerationValues>
+                    <enumerationValue key="project">Project</enumerationValue>
+                    <enumerationValue key="resourceTimeline">Resource timeline</enumerationValue>
+                    <enumerationValue key="hybrid">Hybrid</enumerationValue>
+                </enumerationValues>
+            </property>
+            <property key="readOnly" type="boolean" defaultValue="false">
+                <caption>Read only</caption>
+                <description>Disable all chart editing</description>
+            </property>
+            <property key="useMockData" type="boolean" defaultValue="false">
+                <caption>Use mock data</caption>
+                <description>Load sample data for development without Mendix datasources</description>
+            </property>
+            <property key="timeZoneMode" type="enumeration" defaultValue="browserLocal">
+                <caption>Time zone mode</caption>
+                <description>Time zone mode</description>
+                <enumerationValues>
+                    <enumerationValue key="utc">UTC</enumerationValue>
+                    <enumerationValue key="browserLocal">Browser local</enumerationValue>
+                    <enumerationValue key="fixed">Fixed</enumerationValue>
+                </enumerationValues>
+            </property>
+            <property key="fixedTimeZone" type="string" required="false">
+                <caption>Fixed time zone</caption>
+                <description>IANA time zone when mode is fixed</description>
+            </property>
+            <property key="dateUnit" type="enumeration" defaultValue="day">
+                <caption>Date unit</caption>
+                <description>Date unit</description>
+                <enumerationValues>
+                    <enumerationValue key="minute">Minute</enumerationValue>
+                    <enumerationValue key="hour">Hour</enumerationValue>
+                    <enumerationValue key="day">Day</enumerationValue>
+                </enumerationValues>
+            </property>
+            <property key="emptyMessage" type="string" required="false" defaultValue="No schedule data">
+                <caption>Empty message</caption>
+                <description>Empty message</description>
+            </property>
+            <property key="showTrialNotice" type="boolean" defaultValue="true">
+                <caption>Show trial notice</caption>
+                <description>Show trial notice</description>
+            </property>
+        </propertyGroup>
+
+        <!-- Group 2: Multiple Dimensions -->
+        <propertyGroup caption="Multiple Dimensions">
+            <property key="dimensionConfig" type="object" isList="true" required="false">
+                <caption>Dimension config</caption>
+                <description>Configure dimension axes for filtering and grouping</description>
+                <properties>
+                    <propertyGroup caption="Dimension">
+                        <property key="dimensionKey" type="enumeration" defaultValue="site">
+                            <caption>Key</caption>
+                            <description>Key</description>
+                            <enumerationValues>
+                                <enumerationValue key="site">Site</enumerationValue>
+                                <enumerationValue key="sourceSystem">Source system</enumerationValue>
+                                <enumerationValue key="department">Department</enumerationValue>
+                                <enumerationValue key="status">Status</enumerationValue>
+                                <enumerationValue key="project">Project</enumerationValue>
+                                <enumerationValue key="resource">Resource</enumerationValue>
+                            </enumerationValues>
+                        </property>
+                        <property key="dimensionEnabled" type="boolean" defaultValue="true">
+                            <caption>Enabled</caption>
+                            <description>Enabled</description>
+                        </property>
+                        <property key="dimensionGroupBy" type="boolean" defaultValue="false">
+                            <caption>Group by</caption>
+                            <description>Group by</description>
+                        </property>
+                        <property key="dimensionShowInGrid" type="boolean" defaultValue="true">
+                            <caption>Show in grid</caption>
+                            <description>Show in grid</description>
+                        </property>
+                        <property key="dimensionShowInFilterBar" type="boolean" defaultValue="true">
+                            <caption>Show in filter bar</caption>
+                            <description>Show in filter bar</description>
+                        </property>
+                        <property key="dimensionLabel" type="string" required="false">
+                            <caption>Label</caption>
+                            <description>Label</description>
+                        </property>
+                    </propertyGroup>
+                </properties>
+            </property>
+            <property key="primaryGroupDimension" type="enumeration" defaultValue="none">
+                <caption>Primary group dimension</caption>
+                <description>Primary group dimension</description>
+                <enumerationValues>
+                    <enumerationValue key="none">None</enumerationValue>
+                    <enumerationValue key="site">Site</enumerationValue>
+                    <enumerationValue key="project">Project</enumerationValue>
+                    <enumerationValue key="sourceSystem">Source system</enumerationValue>
+                    <enumerationValue key="department">Department</enumerationValue>
+                </enumerationValues>
+            </property>
+            <property key="crossFilterMode" type="enumeration" defaultValue="and">
+                <caption>Cross filter mode</caption>
+                <description>Cross filter mode</description>
+                <enumerationValues>
+                    <enumerationValue key="and">AND</enumerationValue>
+                    <enumerationValue key="or">OR</enumerationValue>
+                </enumerationValues>
+            </property>
+            <property key="filterMode" type="enumeration" defaultValue="client">
+                <caption>Filter mode</caption>
+                <description>Filter mode</description>
+                <enumerationValues>
+                    <enumerationValue key="client">Client</enumerationValue>
+                    <enumerationValue key="server">Server</enumerationValue>
+                </enumerationValues>
+            </property>
+            <property key="showDimensionFilterBar" type="boolean" defaultValue="true">
+                <caption>Show dimension filter bar</caption>
+                <description>Show dimension filter bar</description>
+            </property>
+            <property key="onDimensionFilterChanged" type="action" required="false">
+                <caption>On dimension filter changed</caption>
+                <description>On dimension filter changed</description>
+            </property>
+        </propertyGroup>
+
+        <!-- Group 3: Data — Tasks -->
+        <propertyGroup caption="Data — Tasks">
+            <property key="tasksDataSource" type="datasource" isList="true" required="false">
+                <caption>Tasks datasource</caption>
+                <description>List of tasks to display on the Gantt chart</description>
+            </property>
+            <property key="taskId" type="attribute" dataSource="tasksDataSource" required="false">
+                <caption>Task ID</caption>
+                <description>Task ID</description>
                 <attributeTypes>
                     <attributeType name="String"/>
-                    <attributeType name="Enum"/>
+                    <attributeType name="AutoNumber"/>
                     <attributeType name="Integer"/>
-                    <attributeType name="Decimal"/>
                     <attributeType name="Long"/>
                 </attributeTypes>
             </property>
-            <property key="dhlganttchartValue" type="string" required="false">
-                <caption>Default value</caption>
-                <description>The dhlganttchart value shown when no value is provided via the attribute</description>
+            <property key="taskLabel" type="attribute" dataSource="tasksDataSource" required="false">
+                <caption>Task label</caption>
+                <description>Task label</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                </attributeTypes>
+            </property>
+            <property key="taskStart" type="attribute" dataSource="tasksDataSource" required="false">
+                <caption>Task start</caption>
+                <description>Task start</description>
+                <attributeTypes>
+                    <attributeType name="DateTime"/>
+                </attributeTypes>
+            </property>
+            <property key="taskEnd" type="attribute" dataSource="tasksDataSource" required="false">
+                <caption>Task end</caption>
+                <description>Task end</description>
+                <attributeTypes>
+                    <attributeType name="DateTime"/>
+                </attributeTypes>
+            </property>
+            <property key="taskDuration" type="attribute" dataSource="tasksDataSource" required="false">
+                <caption>Task duration</caption>
+                <description>Task duration</description>
+                <attributeTypes>
+                    <attributeType name="Integer"/>
+                    <attributeType name="Long"/>
+                    <attributeType name="Decimal"/>
+                </attributeTypes>
+            </property>
+            <property key="taskParentId" type="attribute" dataSource="tasksDataSource" required="false">
+                <caption>Task parent ID</caption>
+                <description>Task parent ID</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                    <attributeType name="Integer"/>
+                    <attributeType name="Long"/>
+                </attributeTypes>
+            </property>
+            <property key="taskProgress" type="attribute" dataSource="tasksDataSource" required="false">
+                <caption>Task progress</caption>
+                <description>Task progress</description>
+                <attributeTypes>
+                    <attributeType name="Decimal"/>
+                    <attributeType name="Integer"/>
+                </attributeTypes>
+            </property>
+            <property key="taskType" type="attribute" dataSource="tasksDataSource" required="false">
+                <caption>Task type</caption>
+                <description>Task type</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                    <attributeType name="Enum"/>
+                </attributeTypes>
+            </property>
+            <property key="taskOpen" type="attribute" dataSource="tasksDataSource" required="false">
+                <caption>Task open</caption>
+                <description>Task open</description>
+                <attributeTypes>
+                    <attributeType name="Boolean"/>
+                </attributeTypes>
+            </property>
+            <property key="taskReadOnly" type="attribute" dataSource="tasksDataSource" required="false">
+                <caption>Task read only</caption>
+                <description>Task read only</description>
+                <attributeTypes>
+                    <attributeType name="Boolean"/>
+                </attributeTypes>
+            </property>
+            <property key="taskColor" type="attribute" dataSource="tasksDataSource" required="false">
+                <caption>Task color</caption>
+                <description>Task color</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                </attributeTypes>
+            </property>
+            <property key="taskSiteCode" type="attribute" dataSource="tasksDataSource" required="false">
+                <caption>Task site code</caption>
+                <description>Task site code</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                    <attributeType name="Enum"/>
+                </attributeTypes>
+            </property>
+            <property key="taskSourceSystem" type="attribute" dataSource="tasksDataSource" required="false">
+                <caption>Task source system</caption>
+                <description>Task source system</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                    <attributeType name="Enum"/>
+                </attributeTypes>
+            </property>
+            <property key="taskStatus" type="attribute" dataSource="tasksDataSource" required="false">
+                <caption>Task status</caption>
+                <description>Task status</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                    <attributeType name="Enum"/>
+                </attributeTypes>
+            </property>
+            <property key="taskVersion" type="attribute" dataSource="tasksDataSource" required="false">
+                <caption>Task version</caption>
+                <description>Optimistic concurrency token</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                    <attributeType name="Integer"/>
+                    <attributeType name="Long"/>
+                </attributeTypes>
+            </property>
+            <property key="taskModifiedAt" type="attribute" dataSource="tasksDataSource" required="false">
+                <caption>Task modified at</caption>
+                <description>Last modified timestamp for conflict detection</description>
+                <attributeTypes>
+                    <attributeType name="DateTime"/>
+                </attributeTypes>
             </property>
         </propertyGroup>
-        <propertyGroup caption="Display">
-            <property key="bootstrapStyle" type="enumeration" defaultValue="default">
-                <caption>DhlGanttChart style</caption>
-                <description>The appearance of the dhlganttchart</description>
+
+        <!-- Group 4: Data — Links -->
+        <propertyGroup caption="Data — Links">
+            <property key="linksDataSource" type="datasource" isList="true" required="false">
+                <caption>Links datasource</caption>
+                <description>Links datasource</description>
+            </property>
+            <property key="linkId" type="attribute" dataSource="linksDataSource" required="false">
+                <caption>Link ID</caption>
+                <description>Link ID</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                    <attributeType name="AutoNumber"/>
+                </attributeTypes>
+            </property>
+            <property key="linkSource" type="attribute" dataSource="linksDataSource" required="false">
+                <caption>Link source task ID</caption>
+                <description>Link source task ID</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                </attributeTypes>
+            </property>
+            <property key="linkTarget" type="attribute" dataSource="linksDataSource" required="false">
+                <caption>Link target task ID</caption>
+                <description>Link target task ID</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                </attributeTypes>
+            </property>
+            <property key="linkType" type="attribute" dataSource="linksDataSource" required="false">
+                <caption>Link type</caption>
+                <description>0=FS, 1=SS, 2=FF, 3=SF</description>
+                <attributeTypes>
+                    <attributeType name="Integer"/>
+                    <attributeType name="Enum"/>
+                    <attributeType name="String"/>
+                </attributeTypes>
+            </property>
+            <property key="linkLag" type="attribute" dataSource="linksDataSource" required="false">
+                <caption>Link lag</caption>
+                <description>Link lag</description>
+                <attributeTypes>
+                    <attributeType name="Integer"/>
+                    <attributeType name="Decimal"/>
+                </attributeTypes>
+            </property>
+        </propertyGroup>
+
+        <!-- Group 5: Data — Resources -->
+        <propertyGroup caption="Data — Resources">
+            <property key="resourcesDataSource" type="datasource" isList="true" required="false">
+                <caption>Resources datasource</caption>
+                <description>Resources datasource</description>
+            </property>
+            <property key="resourceId" type="attribute" dataSource="resourcesDataSource" required="false">
+                <caption>Resource ID</caption>
+                <description>Resource ID</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                    <attributeType name="AutoNumber"/>
+                </attributeTypes>
+            </property>
+            <property key="resourceName" type="attribute" dataSource="resourcesDataSource" required="false">
+                <caption>Resource name</caption>
+                <description>Resource name</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                </attributeTypes>
+            </property>
+            <property key="resourceType" type="attribute" dataSource="resourcesDataSource" required="false">
+                <caption>Resource type</caption>
+                <description>Resource type</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                    <attributeType name="Enum"/>
+                </attributeTypes>
+            </property>
+            <property key="resourceSiteCode" type="attribute" dataSource="resourcesDataSource" required="false">
+                <caption>Resource site code</caption>
+                <description>Resource site code</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                    <attributeType name="Enum"/>
+                </attributeTypes>
+            </property>
+            <property key="resourceDepartment" type="attribute" dataSource="resourcesDataSource" required="false">
+                <caption>Resource department</caption>
+                <description>Resource department</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                    <attributeType name="Enum"/>
+                </attributeTypes>
+            </property>
+            <property key="resourceCapacity" type="attribute" dataSource="resourcesDataSource" required="false">
+                <caption>Resource capacity</caption>
+                <description>Resource capacity</description>
+                <attributeTypes>
+                    <attributeType name="Decimal"/>
+                    <attributeType name="Integer"/>
+                </attributeTypes>
+            </property>
+        </propertyGroup>
+
+        <!-- Group 6: Data — Assignments -->
+        <propertyGroup caption="Data — Assignments">
+            <property key="assignmentsDataSource" type="datasource" isList="true" required="false">
+                <caption>Assignments datasource</caption>
+                <description>Assignments datasource</description>
+            </property>
+            <property key="assignmentId" type="attribute" dataSource="assignmentsDataSource" required="false">
+                <caption>Assignment ID</caption>
+                <description>Assignment ID</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                    <attributeType name="AutoNumber"/>
+                </attributeTypes>
+            </property>
+            <property key="assignmentTaskId" type="attribute" dataSource="assignmentsDataSource" required="false">
+                <caption>Assignment task ID</caption>
+                <description>Assignment task ID</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                </attributeTypes>
+            </property>
+            <property key="assignmentResourceId" type="attribute" dataSource="assignmentsDataSource" required="false">
+                <caption>Assignment resource ID</caption>
+                <description>Assignment resource ID</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                </attributeTypes>
+            </property>
+            <property key="assignmentValue" type="attribute" dataSource="assignmentsDataSource" required="false">
+                <caption>Assignment value</caption>
+                <description>Assignment value</description>
+                <attributeTypes>
+                    <attributeType name="Decimal"/>
+                    <attributeType name="Integer"/>
+                </attributeTypes>
+            </property>
+            <property key="assignmentStart" type="attribute" dataSource="assignmentsDataSource" required="false">
+                <caption>Assignment start</caption>
+                <description>Assignment start</description>
+                <attributeTypes>
+                    <attributeType name="DateTime"/>
+                </attributeTypes>
+            </property>
+            <property key="assignmentEnd" type="attribute" dataSource="assignmentsDataSource" required="false">
+                <caption>Assignment end</caption>
+                <description>Assignment end</description>
+                <attributeTypes>
+                    <attributeType name="DateTime"/>
+                </attributeTypes>
+            </property>
+        </propertyGroup>
+
+        <!-- Group 7: Display & Timeline -->
+        <propertyGroup caption="Display &amp; Timeline">
+            <property key="initialScale" type="enumeration" defaultValue="week">
+                <caption>Initial scale</caption>
+                <description>Initial scale</description>
+                <enumerationValues>
+                    <enumerationValue key="hour">Hour</enumerationValue>
+                    <enumerationValue key="day">Day</enumerationValue>
+                    <enumerationValue key="week">Week</enumerationValue>
+                    <enumerationValue key="month">Month</enumerationValue>
+                    <enumerationValue key="quarter">Quarter</enumerationValue>
+                    <enumerationValue key="year">Year</enumerationValue>
+                </enumerationValues>
+            </property>
+            <property key="initialScrollDate" type="expression" required="false">
+                <caption>Initial scroll date</caption>
+                <description>Initial scroll date</description>
+                <returnType type="DateTime"/>
+            </property>
+            <property key="showGrid" type="boolean" defaultValue="true">
+                <caption>Show grid</caption>
+                <description>Show grid</description>
+            </property>
+            <property key="showChart" type="boolean" defaultValue="true">
+                <caption>Show chart</caption>
+                <description>Show chart</description>
+            </property>
+            <property key="rowHeight" type="integer" defaultValue="36">
+                <caption>Row height</caption>
+                <description>Grid row height in pixels</description>
+            </property>
+            <property key="barHeight" type="integer" defaultValue="24">
+                <caption>Bar height</caption>
+                <description>Task bar height in pixels</description>
+            </property>
+            <property key="fitOnLoad" type="boolean" defaultValue="true">
+                <caption>Fit on load</caption>
+                <description>Fit on load</description>
+            </property>
+            <property key="highlightWeekends" type="boolean" defaultValue="true">
+                <caption>Highlight weekends</caption>
+                <description>Highlight weekends</description>
+            </property>
+            <property key="workingTimeEnabled" type="boolean" defaultValue="false">
+                <caption>Working time enabled</caption>
+                <description>Working time enabled</description>
+            </property>
+            <property key="showTodayMarker" type="boolean" defaultValue="true">
+                <caption>Show today marker</caption>
+                <description>Show today marker</description>
+            </property>
+            <property key="enableTooltips" type="boolean" defaultValue="true">
+                <caption>Enable tooltips</caption>
+                <description>Enable tooltips</description>
+            </property>
+            <property key="enableQuickInfo" type="boolean" defaultValue="false">
+                <caption>Enable quick info</caption>
+                <description>Enable quick info</description>
+            </property>
+            <property key="enableSplitTasks" type="boolean" defaultValue="false">
+                <caption>Enable split tasks</caption>
+                <description>Enable split tasks</description>
+            </property>
+            <property key="enableBaselines" type="boolean" defaultValue="false">
+                <caption>Enable baselines</caption>
+                <description>PRO feature — requires license key</description>
+            </property>
+            <property key="showDeadlines" type="boolean" defaultValue="false">
+                <caption>Show deadlines</caption>
+                <description>Show deadlines</description>
+            </property>
+            <property key="taskBarTemplate" type="enumeration" defaultValue="default">
+                <caption>Task bar template</caption>
+                <description>Task bar template</description>
                 <enumerationValues>
                     <enumerationValue key="default">Default</enumerationValue>
-                    <enumerationValue key="primary">Primary</enumerationValue>
-                    <enumerationValue key="success">Success</enumerationValue>
-                    <enumerationValue key="info">Info</enumerationValue>
-                    <enumerationValue key="inverse">Inverse</enumerationValue>
-                    <enumerationValue key="warning">Warning</enumerationValue>
-                    <enumerationValue key="danger">Danger</enumerationValue>
+                    <enumerationValue key="compact">Compact</enumerationValue>
                 </enumerationValues>
             </property>
-            <property key="dhlganttchartType" type="enumeration" required="true" defaultValue="badge">
-                <caption>Type</caption>
-                <description>Render it as either a badge or a color label</description>
-                <enumerationValues>
-                    <enumerationValue key="badge">Badge</enumerationValue>
-                    <enumerationValue key="label">Label</enumerationValue>
-                </enumerationValues>
+            <property key="showToolbar" type="boolean" defaultValue="true">
+                <caption>Show toolbar</caption>
+                <description>Show toolbar</description>
             </property>
         </propertyGroup>
+
+        <!-- Group 8: Task Editing -->
+        <propertyGroup caption="Task Editing">
+            <property key="enableDragMove" type="boolean" defaultValue="true">
+                <caption>Enable drag move</caption>
+                <description>Enable drag move</description>
+            </property>
+            <property key="enableResize" type="boolean" defaultValue="true">
+                <caption>Enable resize</caption>
+                <description>Enable resize</description>
+            </property>
+            <property key="enableProgressDrag" type="boolean" defaultValue="true">
+                <caption>Enable progress drag</caption>
+                <description>Enable progress drag</description>
+            </property>
+            <property key="snapToGrid" type="boolean" defaultValue="true">
+                <caption>Snap to grid</caption>
+                <description>Snap to grid</description>
+            </property>
+            <property key="enableCreateTask" type="boolean" defaultValue="false">
+                <caption>Enable create task</caption>
+                <description>Enable create task</description>
+            </property>
+            <property key="enableDeleteTask" type="boolean" defaultValue="false">
+                <caption>Enable delete task</caption>
+                <description>Enable delete task</description>
+            </property>
+            <property key="enableHierarchyEdit" type="boolean" defaultValue="true">
+                <caption>Enable hierarchy edit</caption>
+                <description>Enable hierarchy edit</description>
+            </property>
+            <property key="enableLightbox" type="boolean" defaultValue="true">
+                <caption>Enable lightbox</caption>
+                <description>Enable lightbox</description>
+            </property>
+            <property key="enableInlineEdit" type="boolean" defaultValue="false">
+                <caption>Enable inline edit</caption>
+                <description>Enable inline edit</description>
+            </property>
+            <property key="enableCopyPaste" type="boolean" defaultValue="false">
+                <caption>Enable copy paste</caption>
+                <description>Enable copy paste</description>
+            </property>
+            <property key="enableContextMenu" type="boolean" defaultValue="true">
+                <caption>Enable context menu</caption>
+                <description>Enable context menu</description>
+            </property>
+        </propertyGroup>
+
+        <!-- Group 9: Links -->
+        <propertyGroup caption="Links">
+            <property key="enableLinkDraw" type="boolean" defaultValue="true">
+                <caption>Enable link draw</caption>
+                <description>Enable link draw</description>
+            </property>
+            <property key="enableLinkDelete" type="boolean" defaultValue="true">
+                <caption>Enable link delete</caption>
+                <description>Enable link delete</description>
+            </property>
+        </propertyGroup>
+
+        <!-- Group 10: Selection & Keyboard -->
+        <propertyGroup caption="Selection &amp; Keyboard">
+            <property key="enableMultiselect" type="boolean" defaultValue="false">
+                <caption>Enable multiselect</caption>
+                <description>Enable multiselect</description>
+            </property>
+            <property key="enableKeyboard" type="boolean" defaultValue="true">
+                <caption>Enable keyboard</caption>
+                <description>Enable keyboard</description>
+            </property>
+            <property key="selectedTaskId" type="attribute" required="false">
+                <caption>Selected task ID</caption>
+                <description>Selected task ID</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                </attributeTypes>
+            </property>
+            <property key="selectedResourceId" type="attribute" required="false">
+                <caption>Selected resource ID</caption>
+                <description>Selected resource ID</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                </attributeTypes>
+            </property>
+        </propertyGroup>
+
+        <!-- Group 11: Scheduling (PRO) -->
+        <propertyGroup caption="Scheduling (PRO)">
+            <property key="autoScheduling" type="boolean" defaultValue="false">
+                <caption>Auto scheduling</caption>
+                <description>Auto scheduling</description>
+            </property>
+            <property key="enableConstraints" type="boolean" defaultValue="false">
+                <caption>Enable constraints</caption>
+                <description>Enable constraints</description>
+            </property>
+            <property key="showCriticalPath" type="boolean" defaultValue="false">
+                <caption>Show critical path</caption>
+                <description>Show critical path</description>
+            </property>
+        </propertyGroup>
+
+        <!-- Group 12: Resources (PRO) -->
+        <propertyGroup caption="Resources (PRO)">
+            <property key="showResourceHistogram" type="boolean" defaultValue="false">
+                <caption>Show resource histogram</caption>
+                <description>Show resource histogram</description>
+            </property>
+        </propertyGroup>
+
+        <!-- Group 13: Export & Undo (PRO) -->
+        <propertyGroup caption="Export &amp; Undo (PRO)">
+            <property key="enableUndo" type="boolean" defaultValue="false">
+                <caption>Enable undo</caption>
+                <description>Enable undo</description>
+            </property>
+            <property key="enableExport" type="boolean" defaultValue="false">
+                <caption>Enable export</caption>
+                <description>Enable export</description>
+            </property>
+        </propertyGroup>
+
+        <!-- Group 14: Detail Dialog -->
+        <propertyGroup caption="Detail Dialog">
+            <property key="enableDetailDialog" type="boolean" defaultValue="true">
+                <caption>Enable detail dialog</caption>
+                <description>Enable detail dialog</description>
+            </property>
+            <property key="detailDialogTitle" type="string" required="false">
+                <caption>Detail dialog title</caption>
+                <description>Detail dialog title</description>
+            </property>
+            <property key="detailDialogShowCustom" type="boolean" defaultValue="true">
+                <caption>Show custom fields</caption>
+                <description>Show custom fields</description>
+            </property>
+        </propertyGroup>
+
+        <!-- Group 15: Events -->
         <propertyGroup caption="Events">
-            <property key="onClickAction" type="action" required="false">
-                <caption>On click action</caption>
-                <description>Action to trigger when button / label is clicked</description>
+            <property key="onTaskClick" type="action" required="false">
+                <caption>On task click</caption>
+                <description>On task click</description>
+            </property>
+            <property key="onTaskDblClick" type="action" required="false">
+                <caption>On task double click</caption>
+                <description>On task double click</description>
+            </property>
+            <property key="onTaskSelected" type="action" required="false">
+                <caption>On task selected</caption>
+                <description>On task selected</description>
+            </property>
+            <property key="onBeforeTaskChange" type="action" required="false">
+                <caption>On before task change</caption>
+                <description>On before task change</description>
+            </property>
+            <property key="onTaskChanged" type="action" required="false">
+                <caption>On task changed</caption>
+                <description>On task changed</description>
+            </property>
+            <property key="onTaskCreated" type="action" required="false">
+                <caption>On task created</caption>
+                <description>On task created</description>
+            </property>
+            <property key="onTaskDeleted" type="action" required="false">
+                <caption>On task deleted</caption>
+                <description>On task deleted</description>
+            </property>
+            <property key="onLinkCreated" type="action" required="false">
+                <caption>On link created</caption>
+                <description>On link created</description>
+            </property>
+            <property key="onLinkDeleted" type="action" required="false">
+                <caption>On link deleted</caption>
+                <description>On link deleted</description>
+            </property>
+            <property key="onLinkValidationFailed" type="action" required="false">
+                <caption>On link validation failed</caption>
+                <description>On link validation failed</description>
+            </property>
+            <property key="onResourceClick" type="action" required="false">
+                <caption>On resource click</caption>
+                <description>On resource click</description>
+            </property>
+            <property key="onScaleChanged" type="action" required="false">
+                <caption>On scale changed</caption>
+                <description>On scale changed</description>
+            </property>
+            <property key="onDataParseError" type="action" required="false">
+                <caption>On data parse error</caption>
+                <description>On data parse error</description>
+            </property>
+        </propertyGroup>
+
+        <!-- Group 16: Dimension Filters (Expressions) -->
+        <propertyGroup caption="Dimension Filters">
+            <property key="filterSiteCodes" type="expression" required="false">
+                <caption>Filter site codes</caption>
+                <description>Comma-separated site codes to filter the chart</description>
+                <returnType type="String"/>
+            </property>
+            <property key="filterSourceSystems" type="expression" required="false">
+                <caption>Filter source systems</caption>
+                <description>Comma-separated source systems to filter the chart</description>
+                <returnType type="String"/>
+            </property>
+            <property key="filterDepartments" type="expression" required="false">
+                <caption>Filter departments</caption>
+                <description>Comma-separated departments to filter the chart</description>
+                <returnType type="String"/>
+            </property>
+            <property key="filterStatuses" type="expression" required="false">
+                <caption>Filter statuses</caption>
+                <description>Comma-separated statuses to filter the chart</description>
+                <returnType type="String"/>
+            </property>
+            <property key="filterDateFrom" type="expression" required="false">
+                <caption>Filter date from</caption>
+                <description>Filter date from</description>
+                <returnType type="DateTime"/>
+            </property>
+            <property key="filterDateTo" type="expression" required="false">
+                <caption>Filter date to</caption>
+                <description>Filter date to</description>
+                <returnType type="DateTime"/>
+            </property>
+            <property key="filterSearch" type="expression" required="false">
+                <caption>Filter search</caption>
+                <description>Filter search</description>
+                <returnType type="String"/>
+            </property>
+        </propertyGroup>
+
+        <!-- Group 17: Advanced / License -->
+        <propertyGroup caption="Advanced">
+            <property key="licenseKey" type="string" required="false">
+                <caption>License key</caption>
+                <description>dhtmlx commercial license key</description>
+            </property>
+            <property key="advancedConfigJson" type="string" required="false" multiline="true">
+                <caption>Advanced config JSON</caption>
+                <description>Advanced config JSON</description>
+            </property>
+            <property key="debugMode" type="boolean" defaultValue="false">
+                <caption>Debug mode</caption>
+                <description>Debug mode</description>
+            </property>
+            <property key="refreshInterval" type="integer" defaultValue="0">
+                <caption>Refresh interval (seconds)</caption>
+                <description>Auto-refresh interval in seconds; 0 disables polling</description>
+            </property>
+        </propertyGroup>
+
+        <!-- Development helpers -->
+        <propertyGroup caption="Development">
+            <property key="mockShouldFail" type="boolean" defaultValue="false">
+                <caption>Mock load fails</caption>
+                <description>Simulate network error when using mock data</description>
+            </property>
+            <property key="mockScenario" type="enumeration" defaultValue="default">
+                <caption>Mock scenario</caption>
+                <description>Mock scenario</description>
+                <enumerationValues>
+                    <enumerationValue key="default">Multi-site schedule</enumerationValue>
+                    <enumerationValue key="empty">Empty schedule</enumerationValue>
+                    <enumerationValue key="performance">Performance (500 tasks)</enumerationValue>
+                </enumerationValues>
             </property>
         </propertyGroup>
     </properties>

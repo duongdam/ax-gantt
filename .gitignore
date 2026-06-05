@@ -18,3 +18,10 @@ mendixProject
 **/screenshot-results
 **/tests/testProject
 **/artifacts
+
+.cursor
+.specify
+.pnpm-store
+specs
+
+**/__tests__
