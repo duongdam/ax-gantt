@@ -20,8 +20,7 @@ export function ganttTaskToModel(task: Task, existing?: GanttTask): GanttTask {
         start,
         end,
         duration: task.duration ?? existing?.duration,
-        parentId:
-            task.parent && String(task.parent) !== "0" ? String(task.parent) : existing?.parentId,
+        parentId: task.parent && String(task.parent) !== "0" ? String(task.parent) : existing?.parentId,
         progress: typeof task.progress === "number" ? task.progress : existing?.progress,
         type: (task.type as GanttTask["type"]) ?? existing?.type ?? "task",
         open: task.open ?? existing?.open,

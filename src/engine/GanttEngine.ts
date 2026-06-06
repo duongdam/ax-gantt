@@ -1,17 +1,15 @@
 import { gantt, type GanttStatic } from "dhtmlx-gantt";
 
-import { mapModelToDhtmlx, type DhtmlxParsePayload } from "../adapters/mapTasks";
+import { mapModelToDhtmlx } from "../adapters/mapAxGanttModel";
 import { modelTaskToGanttPatch } from "../adapters/mapTasksFromGantt";
-import { getAvailableValuesForDimension, getRelationProperty } from "../dimensions/DimensionRegistry";
-import type { DimensionKey } from "../dimensions/dimensionTypes";
-import type { GanttNormalizedModel, GanttTask } from "../store/types";
-import { applyGanttConfig, setGanttScale } from "./configBuilder";
+import type { AxGanttParsedModel, GanttNormalizedModel, GanttTask } from "../store/types";
+import type { ScalePayload } from "../store/types";
+import { applyGanttConfig, type JsonGanttConfig, setGanttScale } from "./configBuilder";
 import type { FeatureRegistry } from "./FeatureRegistry";
-import { refreshTodayMarker } from "./plugins/markers";
+import { applyJsonMarkers, refreshTodayMarker } from "./plugins/markers";
 import type { GanttScale } from "../store/types";
 import { getAdjacentScale } from "./zoomConfig";
 import type { ViewMode } from "./viewLayouts";
-import { usesResourcePanel } from "./viewLayouts";
 
 export interface GanttEngineInitOptions {
     scale?: GanttScale;
@@ -19,10 +17,10 @@ export interface GanttEngineInitOptions {
     licenseKey?: string;
     rowHeight?: number;
     barHeight?: number;
+    json?: JsonGanttConfig;
 }
 
 export interface GanttParseOptions {
-    groupBy?: DimensionKey | null;
     viewMode?: ViewMode;
 }
 
@@ -35,11 +33,7 @@ export class GanttEngine {
      * Initializes dhtmlx Gantt. Call only when the container is mounted and data is ready
      * (deferred init — do not call while isLoading).
      */
-    init(
-        container: HTMLElement,
-        features: FeatureRegistry,
-        options: GanttEngineInitOptions = {}
-    ): void {
+    init(container: HTMLElement, features: FeatureRegistry, options: GanttEngineInitOptions = {}): void {
         if (this.initialized) {
             return;
         }
@@ -50,7 +44,8 @@ export class GanttEngine {
             viewMode: this.viewMode,
             licenseKey: options.licenseKey,
             rowHeight: options.rowHeight,
-            barHeight: options.barHeight
+            barHeight: options.barHeight,
+            json: options.json
         });
         gantt.init(container);
         this.configureContextMenu(features);
@@ -73,6 +68,46 @@ export class GanttEngine {
         return this.viewMode;
     }
 
+    applyJsonConfig(features: FeatureRegistry, json: JsonGanttConfig): void {
+        if (!this.initialized) {
+            return;
+        }
+        applyGanttConfig(gantt, features, {
+            scale: "week",
+            viewMode: this.viewMode,
+            json
+        });
+        applyJsonMarkers(gantt, json.markers, Boolean(json.interaction?.enableMarkers));
+        gantt.render();
+    }
+
+    parseAxGanttModel(
+        model: AxGanttParsedModel,
+        options?: { defaultExpandTree?: boolean; json?: JsonGanttConfig }
+    ): void {
+        const normalized: GanttNormalizedModel = {
+            tasks: model.tasks,
+            links: model.links,
+            resources: [],
+            assignments: []
+        };
+        this.parse(normalized, { viewMode: "project" });
+
+        if (options?.defaultExpandTree !== false) {
+            gantt.eachTask(task => {
+                if (task.type === "project") {
+                    task.open = true;
+                }
+            });
+        }
+
+        if (options?.json) {
+            applyJsonMarkers(gantt, options.json.markers, Boolean(options.json.interaction?.enableMarkers));
+        }
+
+        gantt.render();
+    }
+
     parse(model: GanttNormalizedModel, options?: GanttParseOptions): void {
         if (!this.initialized) {
             return;
@@ -82,69 +117,17 @@ export class GanttEngine {
             this.viewMode = options.viewMode;
         }
 
-        const payload: DhtmlxParsePayload = mapModelToDhtmlx(model);
-        if (!usesResourcePanel(this.viewMode)) {
-            delete payload.resources;
-            delete payload.assignments;
-        }
+        const payload = mapModelToDhtmlx(model);
         gantt.clearAll();
         gantt.parse(payload);
-        this.applyGrouping(options?.groupBy ?? null, model);
         refreshTodayMarker(gantt);
-
-        if (usesResourcePanel(this.viewMode) && model.resources.length > 0) {
-            gantt.render();
-        }
     }
 
-    applyGrouping(groupBy: DimensionKey | null, model: GanttNormalizedModel): void {
+    setScale(scale: GanttScale, jsonScale?: ScalePayload): void {
         if (!this.initialized) {
             return;
         }
-
-        if (typeof gantt.groupBy !== "function") {
-            return;
-        }
-
-        if (!groupBy || groupBy === "project" || groupBy === "time" || groupBy === "resource") {
-            gantt.groupBy(false);
-            return;
-        }
-
-        const relationProperty = getRelationProperty(groupBy);
-        if (!relationProperty) {
-            gantt.groupBy(false);
-            return;
-        }
-
-        const groups = getAvailableValuesForDimension(model, groupBy).map(value => ({
-            key: value,
-            label: value
-        }));
-
-        if (groups.length === 0) {
-            gantt.groupBy(false);
-            return;
-        }
-
-        try {
-            gantt.groupBy({
-                relation_property: relationProperty,
-                groups,
-                group_id: "key",
-                group_text: "label"
-            });
-        } catch (error) {
-            console.warn("[DhlGanttChart] groupBy failed:", error);
-            gantt.groupBy(false);
-        }
-    }
-
-    setScale(scale: GanttScale): void {
-        if (!this.initialized) {
-            return;
-        }
-        setGanttScale(gantt, scale);
+        setGanttScale(gantt, scale, jsonScale);
         if (gantt.ext?.zoom?.setLevel) {
             gantt.ext.zoom.setLevel(scale);
         }

@@ -1,39 +1,29 @@
-import type { GanttStatic, Link, Task } from "dhtmlx-gantt";
+import type { GanttStatic, Task } from "dhtmlx-gantt";
 
-import {
-    buildLinkEventContext,
-    buildResourceEventContext,
-    buildTaskChangeContext,
-    buildTaskEventContext
-} from "../adapters/actionContext";
+import { buildTaskChangeContext, buildTaskEventContext, type AxGanttChangeType } from "../adapters/actionContext";
 import { ganttTaskToModel } from "../adapters/mapTasksFromGantt";
 import type { FeatureRegistry } from "./FeatureRegistry";
 import type { GanttEngine } from "./GanttEngine";
-import type { DatasourceStore } from "../store/DatasourceStore";
 import type { GanttStore } from "../store/GanttStore";
-import type { GanttScale } from "../store/types";
+import type { JsonDataStore } from "../store/JsonDataStore";
+import type { GanttTask } from "../store/types";
 
 export interface EventBridgeActions {
-    onTaskClickAction?: () => void;
-    onTaskDblClickAction?: () => void;
-    onTaskSelectedAction?: () => void;
-    onScaleChangedAction?: (scale: GanttScale) => void;
-    onTaskChangedAction?: () => boolean | Promise<boolean>;
-    onBeforeTaskChangeAction?: () => boolean | Promise<boolean>;
-    onTaskCreatedAction?: () => void;
-    onTaskDeletedAction?: () => void;
-    onLinkCreatedAction?: () => void;
-    onLinkDeletedAction?: () => void;
-    onLinkValidationFailedAction?: () => void;
-    onResourceClickAction?: () => void;
+    onTaskDbClickAction?: () => void;
+    onTaskMoveAction?: () => boolean | Promise<boolean>;
+    onTaskResizeAction?: () => boolean | Promise<boolean>;
+    onTaskCreateAction?: () => void;
+    onTaskSelectAction?: () => void;
+    onTaskRowDragAction?: () => boolean | Promise<boolean>;
+    onTaskCheckAction?: () => void;
+    onTaskUndoAction?: () => void;
 }
 
 export interface EventBridgeOptions extends EventBridgeActions {
-    datasource: DatasourceStore;
+    jsonData: JsonDataStore;
     ganttStore: GanttStore;
     features: FeatureRegistry;
     engine?: GanttEngine;
-    enableDetailDialog?: boolean;
 }
 
 export class EventBridge {
@@ -42,52 +32,76 @@ export class EventBridge {
     attach(gantt: GanttStatic, options: EventBridgeOptions): void {
         this.detach(gantt);
 
+        if (options.onTaskUndoAction) {
+            gantt.plugins({ undo: true });
+        }
+
         this.eventIds.push(
-            gantt.attachEvent("onTaskClick", (taskId: string | number, event?: Event) => {
-                this.handleTaskClick(String(taskId), event, options);
-                return true;
-            }),
             gantt.attachEvent("onTaskDblClick", (taskId: string | number) => {
-                this.handleTaskDblClick(String(taskId), options);
+                this.handleTaskDbClick(String(taskId), options);
                 return true;
             }),
-            gantt.attachEvent("onBeforeTaskDrag", (taskId: string | number) => {
-                return this.handleBeforeTaskDrag(String(taskId), options);
+            gantt.attachEvent("onBeforeTaskDrag", (taskId: string | number, mode: string) => {
+                return this.handleBeforeTaskDrag(String(taskId), options, mode);
             }),
-            gantt.attachEvent("onAfterTaskDrag", (taskId: string | number) => {
-                this.handleAfterTaskDrag(String(taskId), options);
+            gantt.attachEvent("onAfterTaskDrag", (taskId: string | number, mode: string) => {
+                this.handleAfterTaskChange(String(taskId), options, resolveDragChangeType(mode)).catch(
+                    () => undefined
+                );
             }),
-            gantt.attachEvent("onBeforeTaskChanged", (taskId: string | number, _mode, task: Task) => {
-                return this.handleBeforeTaskChanged(String(taskId), task, options);
+            gantt.attachEvent("onBeforeRowDragEnd", (taskId: string | number) => {
+                return this.handleBeforeRowDrag(String(taskId), options);
             }),
-            gantt.attachEvent("onAfterTaskUpdate", (taskId: string | number, task: Task) => {
-                void this.handleAfterTaskUpdate(String(taskId), task, options);
+            gantt.attachEvent("onTaskCreated", (task: Task) => {
+                this.handleTaskCreate(String(task.id), options);
+                return true;
             }),
-            gantt.attachEvent("onAfterTaskAdd", (taskId: string | number) => {
-                this.handleTaskCreated(String(taskId), options);
-            }),
-            gantt.attachEvent("onAfterTaskDelete", (taskId: string | number, task: Task) => {
-                this.handleTaskDeleted(String(taskId), task, options);
-            }),
-            gantt.attachEvent("onBeforeLinkAdd", (_id, link: Link) => {
-                return this.handleBeforeLinkAdd(link, options);
-            }),
-            gantt.attachEvent("onAfterLinkAdd", (id: string | number, link: Link) => {
-                this.handleAfterLinkAdd(id, link, options);
-            }),
-            gantt.attachEvent("onAfterLinkDelete", (id: string | number) => {
-                this.handleAfterLinkDelete(String(id), options);
-            }),
-            gantt.attachEvent("onCircularLinkError", (link: Link) => {
-                this.handleLinkValidationFailed(String(link.source), String(link.target), "circular", options);
-            }),
-            gantt.attachEvent("onTaskRowClick", (id: string | number) => {
-                const resourceStore = gantt.getDatastore(gantt.config.resource_store);
-                if (resourceStore?.getItem(id)) {
-                    this.handleResourceClick(String(id), options);
-                }
+            gantt.attachEvent("onRowDragEnd", (taskId: string | number) => {
+                this.handleTaskRowDrag(String(taskId), options).catch(() => undefined);
             })
         );
+
+        if (options.onTaskSelectAction) {
+            const selectEvent = options.features.isEnabled("enableMultiselect") ? "onTaskSelected" : "onTaskClick";
+            this.eventIds.push(
+                gantt.attachEvent(selectEvent, (taskId: string | number) => {
+                    this.handleTaskSelect(String(taskId), options);
+                    return true;
+                })
+            );
+        }
+
+        if (options.onTaskCheckAction) {
+            this.eventIds.push(
+                gantt.attachEvent("onAfterTaskUpdate", (taskId: string | number, task: Task) => {
+                    const id = String(taskId);
+                    const previous = options.jsonData.findTaskById(id);
+                    const prevChecked = readCheckboxValue(previous);
+                    const nextChecked = readCheckboxValue(task);
+                    if (prevChecked === nextChecked) {
+                        return;
+                    }
+                    const updated = ganttTaskToModel(task, previous);
+                    options.jsonData.updateTask(id, updated);
+                    this.handleTaskCheck(id, options);
+                })
+            );
+        }
+
+        if (options.onTaskUndoAction) {
+            this.eventIds.push(
+                gantt.attachEvent("onAfterUndo", () => {
+                    options.jsonData.setLastActionContext({ changeType: "undo" });
+                    options.onTaskUndoAction?.();
+                    return true;
+                }),
+                gantt.attachEvent("onAfterRedo", () => {
+                    options.jsonData.setLastActionContext({ changeType: "redo" });
+                    options.onTaskUndoAction?.();
+                    return true;
+                })
+            );
+        }
     }
 
     detach(gantt: GanttStatic): void {
@@ -97,97 +111,107 @@ export class EventBridge {
         this.eventIds = [];
     }
 
-    notifyScaleChanged(scale: GanttScale, options: EventBridgeOptions): void {
-        options.onScaleChangedAction?.(scale);
-    }
-
-    private handleTaskClick(taskId: string, event: Event | undefined, options: EventBridgeOptions): void {
-        if (options.datasource.isLoading) {
+    private handleTaskDbClick(taskId: string, options: EventBridgeOptions): void {
+        if (options.jsonData.isLoading) {
             return;
         }
 
-        const task = options.datasource.findTaskById(taskId);
+        const task = options.jsonData.findTaskById(taskId);
         if (!task) {
             return;
         }
 
         options.ganttStore.selectTask(taskId);
-        options.datasource.setLastActionContext(buildTaskEventContext(task));
-        options.onTaskClickAction?.();
-        options.onTaskSelectedAction?.();
-
-        if (options.enableDetailDialog !== false && isTaskBarClick(event)) {
-            options.datasource.openTaskDetailDialog(task);
-        }
+        options.jsonData.setLastActionContext(buildTaskEventContext(task));
+        options.onTaskDbClickAction?.();
     }
 
-    private handleTaskDblClick(taskId: string, options: EventBridgeOptions): void {
-        const task = options.datasource.findTaskById(taskId);
+    private handleTaskSelect(taskId: string, options: EventBridgeOptions): void {
+        if (options.jsonData.isLoading) {
+            return;
+        }
+
+        const task = options.jsonData.findTaskById(taskId);
         if (!task) {
             return;
         }
 
-        options.datasource.setLastActionContext(buildTaskEventContext(task));
-        options.onTaskDblClickAction?.();
+        options.ganttStore.selectTask(taskId);
+        options.jsonData.setLastActionContext(buildTaskEventContext(task));
+        options.onTaskSelectAction?.();
     }
 
-    private handleTaskCreated(taskId: string, options: EventBridgeOptions): void {
-        const task = options.datasource.findTaskById(taskId);
+    private handleTaskCreate(taskId: string, options: EventBridgeOptions): void {
+        const gantt = options.engine?.getGantt();
+        let task = options.jsonData.findTaskById(taskId);
+
+        if (!task && gantt?.isTaskExists(taskId)) {
+            task = ganttTaskToModel(gantt.getTask(taskId));
+            options.jsonData.addTask(task);
+        }
+
         if (task) {
-            options.datasource.setLastActionContext(buildTaskChangeContext(task, "create"));
+            options.jsonData.setLastActionContext(buildTaskChangeContext(task, "create"));
         }
-        options.onTaskCreatedAction?.();
+        options.onTaskCreateAction?.();
     }
 
-    private handleTaskDeleted(taskId: string, task: Task, options: EventBridgeOptions): void {
-        options.datasource.setLastActionContext({
-            taskId,
-            taskLabel: String(task.text ?? taskId),
-            entityType: "task"
-        });
-        options.onTaskDeletedAction?.();
-    }
-
-    private handleResourceClick(resourceId: string, options: EventBridgeOptions): void {
-        const resource = options.datasource.findResourceById(resourceId);
-        if (!resource) {
-            return;
-        }
-
-        options.datasource.setLastActionContext(buildResourceEventContext(resource));
-        options.onResourceClickAction?.();
-
-        if (options.enableDetailDialog !== false) {
-            options.datasource.openResourceDetailDialog(resource);
-        }
-    }
-
-    private handleAfterLinkDelete(linkId: string, options: EventBridgeOptions): void {
-        options.datasource.removeLink(linkId);
-        options.onLinkDeletedAction?.();
-    }
-
-    private handleLinkValidationFailed(
-        sourceTaskId: string,
-        targetTaskId: string,
-        reason: "circular" | "duplicate" | "readonly",
-        options: EventBridgeOptions
-    ): void {
-        options.datasource.setLastActionContext({ sourceTaskId, targetTaskId, reason });
-        options.ganttStore.showUiMessage({
-            type: "error",
-            code: "E002",
-            text: "Circular dependency detected. Link was not created."
-        });
-        options.onLinkValidationFailedAction?.();
-    }
-
-    private handleBeforeTaskDrag(taskId: string, options: EventBridgeOptions): boolean {
-        if (options.datasource.isLoading) {
+    private handleBeforeRowDrag(taskId: string, options: EventBridgeOptions): boolean {
+        if (options.jsonData.isLoading || options.features.getFlags().readOnly) {
             return false;
         }
 
-        const storeTask = options.datasource.findTaskById(taskId);
+        const storeTask = options.jsonData.findTaskById(taskId);
+        if (!options.features.isTaskEditable(storeTask)) {
+            return false;
+        }
+
+        if (storeTask) {
+            options.ganttStore.saveTaskSnapshot(storeTask);
+        }
+        return true;
+    }
+
+    private async handleTaskRowDrag(taskId: string, options: EventBridgeOptions): Promise<void> {
+        const gantt = options.engine?.getGantt();
+        if (!gantt?.isTaskExists(taskId)) {
+            return;
+        }
+
+        const existing = options.jsonData.findTaskById(taskId);
+        const updated = ganttTaskToModel(gantt.getTask(taskId), existing);
+        const snapshot = options.ganttStore.getTaskSnapshot(taskId) ?? existing;
+
+        options.jsonData.updateTask(taskId, updated);
+        options.jsonData.setLastActionContext(buildTaskChangeContext(updated, "rowDrag", snapshot));
+
+        const committed = await this.commitAction(options.onTaskRowDragAction);
+        if (!committed) {
+            this.rollbackTask(taskId, snapshot, options, "rowDrag");
+            return;
+        }
+
+        options.ganttStore.clearTaskSnapshot(taskId);
+    }
+
+    private handleTaskCheck(taskId: string, options: EventBridgeOptions): void {
+        const task = options.jsonData.findTaskById(taskId);
+        if (task) {
+            options.jsonData.setLastActionContext(buildTaskEventContext(task));
+        }
+        options.onTaskCheckAction?.();
+    }
+
+    private handleBeforeTaskDrag(taskId: string, options: EventBridgeOptions, mode: string): boolean {
+        if (options.jsonData.isLoading) {
+            return false;
+        }
+
+        if (!isDragModeAllowed(mode, options.features)) {
+            return false;
+        }
+
+        const storeTask = options.jsonData.findTaskById(taskId);
         if (!options.features.isTaskEditable(storeTask)) {
             return false;
         }
@@ -199,75 +223,43 @@ export class EventBridge {
         return true;
     }
 
-    private handleAfterTaskDrag(taskId: string, options: EventBridgeOptions): void {
+    private async handleAfterTaskChange(
+        taskId: string,
+        options: EventBridgeOptions,
+        changeType: AxGanttChangeType
+    ): Promise<void> {
         options.ganttStore.setDragging(false);
+
         const gantt = options.engine?.getGantt();
         if (!gantt?.isTaskExists(taskId)) {
             return;
         }
-        void this.handleAfterTaskUpdate(taskId, gantt.getTask(taskId), options, "move");
-    }
 
-    private handleBeforeTaskChanged(taskId: string, task: Task, options: EventBridgeOptions): boolean {
-        const storeTask = options.datasource.findTaskById(taskId);
-        if (!options.features.isTaskEditable(storeTask)) {
-            return false;
-        }
-
-        const snapshot = options.ganttStore.getTaskSnapshot(taskId) ?? storeTask;
-        if (snapshot?.version !== undefined && storeTask?.version !== undefined && snapshot.version !== storeTask.version) {
-            options.ganttStore.showUiMessage({
-                type: "error",
-                code: "CONFLICT",
-                text: "Task was modified by another user. Your changes were rejected."
-            });
-            return false;
-        }
-
-        if (options.onBeforeTaskChangeAction) {
-            const allowed = options.onBeforeTaskChangeAction();
-            if (allowed === false) {
-                return false;
-            }
-        }
-
-        if (storeTask && task.readonly) {
-            return false;
-        }
-
-        return true;
-    }
-
-    private async handleAfterTaskUpdate(
-        taskId: string,
-        task: Task,
-        options: EventBridgeOptions,
-        changeType: "move" | "resize" | "progress" | "text" = "move"
-    ): Promise<void> {
-        const existing = options.datasource.findTaskById(taskId);
-        const updated = ganttTaskToModel(task, existing);
+        const existing = options.jsonData.findTaskById(taskId);
+        const updated = ganttTaskToModel(gantt.getTask(taskId), existing);
         const snapshot = options.ganttStore.getTaskSnapshot(taskId) ?? existing;
 
-        options.datasource.updateTask(taskId, updated);
-        options.datasource.setLastActionContext(buildTaskChangeContext(updated, changeType, snapshot));
+        options.jsonData.updateTask(taskId, updated);
+        options.jsonData.setLastActionContext(buildTaskChangeContext(updated, changeType, snapshot));
 
-        const committed = await this.commitTaskChange(options);
+        const action = resolveChangeAction(changeType, options);
+        const committed = await this.commitAction(action);
+
         if (!committed) {
-            this.rollbackTask(taskId, snapshot, options);
+            this.rollbackTask(taskId, snapshot, options, changeType);
             return;
         }
 
-        options.onTaskChangedAction?.();
         options.ganttStore.clearTaskSnapshot(taskId);
     }
 
-    private async commitTaskChange(options: EventBridgeOptions): Promise<boolean> {
-        if (!options.onTaskChangedAction) {
+    private async commitAction(action?: () => boolean | Promise<boolean>): Promise<boolean> {
+        if (!action) {
             return true;
         }
 
         try {
-            const result = await options.onTaskChangedAction();
+            const result = await action();
             return result !== false;
         } catch {
             return false;
@@ -276,14 +268,16 @@ export class EventBridge {
 
     private rollbackTask(
         taskId: string,
-        snapshot: ReturnType<DatasourceStore["findTaskById"]>,
-        options: EventBridgeOptions
+        snapshot: GanttTask | undefined,
+        options: EventBridgeOptions,
+        changeType: AxGanttChangeType
     ): void {
         if (!snapshot) {
             return;
         }
 
-        options.datasource.updateTask(taskId, snapshot);
+        options.jsonData.updateTask(taskId, snapshot);
+        options.jsonData.setLastActionContext(buildTaskChangeContext(snapshot, changeType, snapshot, true));
         options.engine?.rollbackTask(snapshot);
         options.ganttStore.showUiMessage({
             type: "error",
@@ -291,45 +285,59 @@ export class EventBridge {
         });
         options.ganttStore.clearTaskSnapshot(taskId);
     }
-
-    private handleBeforeLinkAdd(link: Link, options: EventBridgeOptions): boolean {
-        if (options.datasource.isLoading || !options.features.getFlags().enableLinkDraw) {
-            return false;
-        }
-
-        if (link.source === link.target) {
-            this.handleLinkValidationFailed(String(link.source), String(link.target), "duplicate", options);
-            return false;
-        }
-
-        return true;
-    }
-
-    private handleAfterLinkAdd(_id: string | number, link: Link, options: EventBridgeOptions): void {
-        const mapped = {
-            id: String(link.id),
-            source: String(link.source),
-            target: String(link.target),
-            type: Number(link.type) as 0 | 1 | 2 | 3,
-            lag: link.lag ?? 0
-        };
-        options.datasource.addLink(mapped);
-        options.datasource.setLastActionContext(buildLinkEventContext(mapped));
-        options.onLinkCreatedAction?.();
-    }
 }
 
 export function createEventBridge(): EventBridge {
     return new EventBridge();
 }
 
-/** True when the click target is a task bar on the timeline, not a grid row. */
-function isTaskBarClick(event?: Event | null): boolean {
-    if (!event?.target || !(event.target instanceof Element)) {
-        return false;
+function resolveDragChangeType(mode: string): AxGanttChangeType {
+    if (mode === "resize") {
+        return "resize";
     }
+    if (mode === "progress") {
+        return "progress";
+    }
+    return "move";
+}
 
-    return Boolean(
-        event.target.closest(".gantt_task_line, .gantt_task_content, .gantt_milestone")
-    );
+function isDragModeAllowed(mode: string, features: FeatureRegistry): boolean {
+    if (mode === "resize") {
+        return features.isEnabled("enableResize");
+    }
+    if (mode === "progress") {
+        return features.isEnabled("enableProgressDrag");
+    }
+    return features.isEnabled("enableDragMove");
+}
+
+function resolveChangeAction(
+    changeType: AxGanttChangeType,
+    options: EventBridgeOptions
+): (() => boolean | Promise<boolean>) | undefined {
+    if (changeType === "resize" || changeType === "progress") {
+        return options.onTaskResizeAction;
+    }
+    return options.onTaskMoveAction;
+}
+
+function readCheckboxValue(source?: { custom?: Record<string, unknown> } | Task): boolean | undefined {
+    if (!source) {
+        return undefined;
+    }
+    const record = source as Record<string, unknown>;
+    const custom = (record.custom as Record<string, unknown> | undefined) ?? {};
+    if (typeof custom.checked === "boolean") {
+        return custom.checked;
+    }
+    if (typeof custom.chosen === "boolean") {
+        return custom.chosen;
+    }
+    if (typeof record.checked === "boolean") {
+        return record.checked;
+    }
+    if (typeof record.chosen === "boolean") {
+        return record.chosen;
+    }
+    return undefined;
 }

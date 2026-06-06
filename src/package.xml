@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <package xmlns="http://www.mendix.com/package/1.0/">
-    <clientModule name="DhlGanttChart" version="1.0.0" xmlns="http://www.mendix.com/clientModule/1.0/">
+    <clientModule name="AxGantt" version="1.0.0" xmlns="http://www.mendix.com/clientModule/1.0/">
         <widgetFiles>
-            <widgetFile path="DhlGanttChart.xml"/>
+            <widgetFile path="AxGantt.xml"/>
         </widgetFiles>
         <files>
-            <file path="mendix/dhlganttchart"/>
+            <file path="mendix/axgantt"/>
         </files>
     </clientModule>
 </package>

@@ -19,6 +19,7 @@ export function useGanttLifecycle({
     licenseKey,
     rowHeight,
     barHeight,
+    json,
     isReady,
     onEngineReady
 }: UseGanttLifecycleOptions): RefObject<GanttEngine | null> {
@@ -35,11 +36,18 @@ export function useGanttLifecycle({
         const engine = createGanttEngine();
 
         try {
-            engine.init(containerRef.current, features, { scale, viewMode, licenseKey, rowHeight, barHeight });
+            engine.init(containerRef.current, features, {
+                scale,
+                viewMode,
+                licenseKey,
+                rowHeight,
+                barHeight,
+                json
+            });
             engineRef.current = engine;
             onEngineReadyRef.current?.(engine);
         } catch (error) {
-            console.error("[DhlGanttChart] Failed to initialize Gantt engine:", error);
+            console.error("[AxGantt] Failed to initialize Gantt engine:", error);
             engineRef.current = null;
         }
 
@@ -47,7 +55,7 @@ export function useGanttLifecycle({
             engine.destroy();
             engineRef.current = null;
         };
-    }, [isReady, containerRef, features, scale, viewMode, licenseKey, rowHeight, barHeight]);
+    }, [isReady, containerRef, features, scale, viewMode, licenseKey, rowHeight, barHeight, json]);
 
     return engineRef;
 }

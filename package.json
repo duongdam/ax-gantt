@@ -1,8 +1,9 @@
 {
-  "name": "dhlganttchart",
-  "widgetName": "DhlGanttChart",
+  "name": "axgantt",
+  "widgetName": "AxGantt",
   "version": "1.0.0",
-  "description": "DHTMLX Gantt Chart",
+  "description": "AxGantt — PM Roadmap Gantt Chart",
+  "packageManager": "pnpm@10.30.0",
   "copyright": "© Mendix Technology BV 2026. All rights reserved.",
   "author": "Ryan",
   "engines": {
@@ -27,28 +28,21 @@
     "release": "pluggable-widgets-tools release:web"
   },
   "devDependencies": {
-    "@mendix/pluggable-widgets-tools": "^11.11.0",
+    "@mendix/pluggable-widgets-tools": "^11.8.1",
     "@types/big.js": "^6.2.2",
     "@types/jest": "^29.5.14",
     "@types/node": "^25.9.1",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
     "mendix": "11.10.0"
   },
   "dependencies": {
+    "antd": "^6.4.3",
     "classnames": "^2.5.1",
     "dhtmlx-gantt": "^9.1.4",
     "mobx": "^6.16.0",
     "mobx-react-lite": "^4.1.1"
-  },
-  "resolutions": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0"
-  },
-  "overrides": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0"
   }
 }

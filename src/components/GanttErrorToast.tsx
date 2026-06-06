@@ -3,7 +3,7 @@ import { ReactElement } from "react";
 
 import { useGanttStore } from "../store/StoreContext";
 
-export const GanttErrorToast = observer(function GanttErrorToast(): ReactElement | null {
+export const GanttErrorToast = observer((): ReactElement | null => {
     const ganttStore = useGanttStore();
     const message = ganttStore.uiMessage;
 

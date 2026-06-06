@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<widget id="mendix.axgantt.AxGantt" pluginWidget="true" needsEntityContext="false" offlineCapable="true"
+        supportedPlatform="Web"
+        xmlns="http://www.mendix.com/widget/1.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.mendix.com/widget/1.0/ ../node_modules/mendix/custom_widget.xsd">
+    <name>Ax Gantt</name>
+    <description>PM Roadmap Gantt chart with JSON-driven config and Mendix action callbacks</description>
+    <icon>
+        iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAABp1BMVEUAAABV//9mzP9LtP9Ms/9Jtv9NsvdJsfpLtPpJsfdJsfhJsvhJsvdKsvdJsPhKsPhJsfdJsPhJsfdIsfhJsfdIsPdJsfhJsfhJsPhJsPhIsfhIsPdJsPdKsPdKsfdNsvdOsvdPs/dQs/dRtPdStPdTtPdUtfdWtvdXtvdauPdcuPdeufdeufhguvhiu/hju/hkvPhmvfhnvfhpvvhrv/huwPhvwfhxwfhywvhzwvh4xfl5xfl6xfl8xvl9xvl9x/mByPmCyfmFyvmGyvmJzPmKzPmLzfmNzvqPzvqQz/qT0PqU0PqU0fqX0vqY0vqa0/qe1fqg1vqj1/uk1/un2fup2vut2/uv3Puw3Puw3fuz3vu13/u23/u34Pu44Pu64fu64fy84vy94vy+4/y/4/zD5fzE5fzG5vzH5vzI5/zK6PzL6PzR6/zT7P3U7P3V7f3W7f3Y7v3Z7v3c8P3e8f3f8f3g8f3i8v3l8/3l9P3n9P3r9v7t9/7u9/7v+P7w+P7x+f7y+f70+v71+v74/P75/P76/f77/f78/f78/v79/v7+/v7////6dMsRAAAAG3RSTlMAAwURGxwhMTNic3SEh4iVp7XBzejt7vH5/f6PsMNWAAABsklEQVR4AWIYfGAUjIJRMAqYuYREJKWJAqLCPGwY+jnFpEkBEryMqPr5pEkFgkwo9kuTDviR/S9GhgFSHAgDuKXJAQIIA4TIMkAcEY4i0mQBVrgBkuQZwA43QJo8wIFhQEhEOIBQOutHJozDOP5Crp4e1RhkJ0tKGJFd6oNEdtmJyEIzpaZl5nrRZgaHM/2Pf5/vwXXfyagXgG93bwSAlEolowLMm9w83gibhXH2gKKVdD67gTnWjwCk+VVjMQS4suSnnjMLRVFc9sAHvAX2A9fySaXNBMbEZVUWscaHIMRuqwBgD8hDEbnsRmfjUKJkAQZGCTlO/xWBwIADQLIZBlY441MvfoF1xlFS/4fy+bzXKh4dgNJE7L3eh3tmtuWa+AMcMIY3dgUvZQpGEYmMw2kD7HC+R29UqyoXLaBd0QZxzgXgikLLDSqJTKU5HOcS0MsbA9jPqtwCRvXm2eorBbNIJBw3KJ9O4Yl+AAXdnyaLt7PWN3jRWLvzmAVp94zO5+n41/onfo/UpExxZqI0O7NQr0DhIq9Io7hQpbRYp7hiobRqo6ByFcNWuY6CUTAKRgEAo8X0lBD3V30AAAAASUVORK5CYII=
+    </icon>
+    <properties>
+        <propertyGroup caption="General">
+            <property key="class" type="string" required="false">
+                <caption>Class</caption>
+                <description>CSS class</description>
+            </property>
+            <property key="style" type="string" required="false">
+                <caption>Style</caption>
+                <description>Inline style</description>
+            </property>
+            <property key="tabIndex" type="integer" defaultValue="0">
+                <caption>Tab index</caption>
+                <description>Focus order</description>
+            </property>
+            <property key="useMockData" type="boolean" defaultValue="false">
+                <caption>Use mock data</caption>
+                <description>Load sample roadmap JSON for development</description>
+            </property>
+        </propertyGroup>
+
+        <propertyGroup caption="PM Roadmap Header">
+            <property key="roadmapNo" type="expression" required="false">
+                <caption>Roadmap number</caption>
+                <description>Document number e.g. Msoc251030-155</description>
+                <returnType type="String"/>
+            </property>
+            <property key="roadmapRevision" type="expression" required="false">
+                <caption>Roadmap revision</caption>
+                <description>Revision label</description>
+                <returnType type="String"/>
+            </property>
+            <property key="roadmapRevisedBy" type="expression" required="false">
+                <caption>Revised by</caption>
+                <description>User who last revised the roadmap</description>
+                <returnType type="String"/>
+            </property>
+            <property key="roadmapRevisedAt" type="expression" required="false">
+                <caption>Revised at</caption>
+                <description>Last revision timestamp</description>
+                <returnType type="DateTime"/>
+            </property>
+        </propertyGroup>
+
+        <propertyGroup caption="Data (JSON)">
+            <property key="taskListJson" type="expression" required="false">
+                <caption>Task list JSON</caption>
+                <description>JSON string with tasks and optional links</description>
+                <returnType type="String"/>
+            </property>
+            <property key="scaleJson" type="expression" required="false">
+                <caption>Scale JSON</caption>
+                <description>Timeline scale config (year/week). Default: year + W## weeks</description>
+                <returnType type="String"/>
+            </property>
+            <property key="columnsJson" type="expression" required="false">
+                <caption>Columns JSON</caption>
+                <description>Left grid column definitions</description>
+                <returnType type="String"/>
+            </property>
+            <property key="markerJson" type="expression" required="false">
+                <caption>Marker JSON</caption>
+                <description>Timeline markers (requires enableMarker)</description>
+                <returnType type="String"/>
+            </property>
+            <property key="ganttStartDate" type="expression" required="false">
+                <caption>Gantt start date</caption>
+                <description>Visible timeline range start</description>
+                <returnType type="DateTime"/>
+            </property>
+            <property key="ganttEndDate" type="expression" required="false">
+                <caption>Gantt end date</caption>
+                <description>Visible timeline range end</description>
+                <returnType type="DateTime"/>
+            </property>
+            <property key="initialScroll" type="expression" required="false">
+                <caption>Initial scroll</caption>
+                <description>Scroll target date on load</description>
+                <returnType type="DateTime"/>
+            </property>
+        </propertyGroup>
+
+        <propertyGroup caption="Display">
+            <property key="ganttWidth" type="integer" required="false" defaultValue="0">
+                <caption>Gantt width</caption>
+                <description>Chart width in pixels (0 = auto)</description>
+            </property>
+            <property key="ganttHeight" type="integer" required="false" defaultValue="600">
+                <caption>Gantt height</caption>
+                <description>Chart height in pixels</description>
+            </property>
+            <property key="defaultExpandTree" type="boolean" defaultValue="true">
+                <caption>Default expand tree</caption>
+                <description>Expand project rows on load</description>
+            </property>
+            <property key="showAddTaskButton" type="boolean" defaultValue="false">
+                <caption>Show add task button</caption>
+                <description>Show dhtmlx add task button</description>
+            </property>
+            <property key="enableMarker" type="boolean" defaultValue="false">
+                <caption>Enable marker</caption>
+                <description>Enable timeline markers from markerJson</description>
+            </property>
+            <property key="autoFit" type="boolean" defaultValue="false">
+                <caption>Auto fit</caption>
+                <description>Fit timeline to tasks on load</description>
+            </property>
+            <property key="autoScroll" type="boolean" defaultValue="true">
+                <caption>Auto scroll</caption>
+                <description>Auto-scroll on date change</description>
+            </property>
+            <property key="fitTasks" type="boolean" defaultValue="false">
+                <caption>Fit tasks</caption>
+                <description>Zoom to fit all tasks</description>
+            </property>
+        </propertyGroup>
+
+        <propertyGroup caption="Interaction">
+            <property key="readOnly" type="boolean" defaultValue="false">
+                <caption>Read only</caption>
+                <description>Disable all chart editing</description>
+            </property>
+            <property key="mayEdit" type="boolean" defaultValue="true">
+                <caption>May edit</caption>
+                <description>Master edit permission gate</description>
+            </property>
+            <property key="dragMove" type="boolean" defaultValue="true">
+                <caption>Drag move</caption>
+                <description>Drag task horizontally</description>
+            </property>
+            <property key="dragProgress" type="boolean" defaultValue="true">
+                <caption>Drag progress</caption>
+                <description>Drag progress handle</description>
+            </property>
+            <property key="dragMultiple" type="boolean" defaultValue="true">
+                <caption>Drag multiple</caption>
+                <description>Multi-task drag</description>
+            </property>
+            <property key="dragResize" type="boolean" defaultValue="true">
+                <caption>Drag resize</caption>
+                <description>Resize task duration</description>
+            </property>
+            <property key="gridResize" type="boolean" defaultValue="true">
+                <caption>Grid resize</caption>
+                <description>Resize grid columns</description>
+            </property>
+            <property key="resizeRows" type="boolean" defaultValue="true">
+                <caption>Resize rows</caption>
+                <description>Resize row height</description>
+            </property>
+            <property key="sort" type="boolean" defaultValue="true">
+                <caption>Sort</caption>
+                <description>Enable column sort</description>
+            </property>
+            <property key="clickDrag" type="boolean" defaultValue="false">
+                <caption>Click drag</caption>
+                <description>Create task by click-drag</description>
+            </property>
+        </propertyGroup>
+
+        <propertyGroup caption="Events">
+            <property key="onTaskCreate" type="action" required="false">
+                <caption>On task create</caption>
+                <description>Fires when a new task is created</description>
+            </property>
+            <property key="onTaskResize" type="action" required="false">
+                <caption>On task resize</caption>
+                <description>Fires when task duration is changed by resize</description>
+            </property>
+            <property key="onTaskMove" type="action" required="false">
+                <caption>On task move</caption>
+                <description>Fires when a task is moved horizontally</description>
+            </property>
+            <property key="onTaskDbClick" type="action" required="false">
+                <caption>On task double click</caption>
+                <description>Fires on double-click — bind nanoflow to open Mendix detail dialog</description>
+            </property>
+            <property key="onTaskCheck" type="action" required="false">
+                <caption>On task check</caption>
+                <description>Fires when checkbox column is toggled</description>
+            </property>
+            <property key="onTaskUndo" type="action" required="false">
+                <caption>On task undo</caption>
+                <description>Fires on undo operation</description>
+            </property>
+            <property key="onTaskSelect" type="action" required="false">
+                <caption>On task select</caption>
+                <description>Fires when task selection changes</description>
+            </property>
+            <property key="onTaskRowDrag" type="action" required="false">
+                <caption>On task row drag</caption>
+                <description>Fires when a row is reordered in the grid</description>
+            </property>
+        </propertyGroup>
+    </properties>
+</widget>

@@ -2,6 +2,87 @@ export type GanttTaskType = "task" | "project" | "milestone";
 export type GanttPriority = "low" | "normal" | "high" | "critical";
 export type GanttEntityType = "task" | "link" | "resource" | "assignment";
 
+export type AxGanttTaskLevel = "portfolio" | "program" | "phase" | "product" | "task";
+export type WeekLabelFormat = "W##" | "T##";
+
+/** Raw task shape from taskListJson (dates as ISO strings). */
+export interface AxGanttTaskJson {
+    id: string;
+    text: string;
+    start: string;
+    end?: string;
+    duration?: number;
+    parent?: string;
+    type?: GanttTaskType;
+    open?: boolean;
+    progress?: number;
+    readonly?: boolean;
+    color?: string;
+    level?: AxGanttTaskLevel;
+    [key: string]: unknown;
+}
+
+export interface AxGanttLinkJson {
+    id: string;
+    source: string;
+    target: string;
+    type: 0 | 1 | 2 | 3;
+    lag?: number;
+}
+
+export interface TaskListPayload {
+    tasks: AxGanttTaskJson[];
+    links?: AxGanttLinkJson[];
+}
+
+export interface ScaleUnit {
+    unit: "year" | "month" | "week" | "day";
+    step?: number;
+    format?: string;
+}
+
+export interface ScalePayload {
+    anchorYear?: number;
+    weekLabelFormat?: WeekLabelFormat;
+    scales?: ScaleUnit[];
+}
+
+export interface ColumnDef {
+    name: string;
+    label: string;
+    width?: number;
+    tree?: boolean;
+    align?: "left" | "center" | "right";
+    resize?: boolean;
+    template?: string;
+}
+
+export interface ColumnsPayload {
+    columns: ColumnDef[];
+}
+
+export interface MarkerDef {
+    start_date: string;
+    css?: string;
+    text?: string;
+    title?: string;
+}
+
+export interface MarkerPayload {
+    markers: MarkerDef[];
+}
+
+export interface AxGanttParsedModel {
+    tasks: GanttTask[];
+    links: GanttLink[];
+}
+
+export interface JsonParseResult<T> {
+    data: T;
+    errors: string[];
+    warnings: string[];
+}
+
 export interface GanttTask {
     id: string;
     text: string;
@@ -109,3 +190,21 @@ export const emptyModel = (): GanttNormalizedModel => ({
     resources: [],
     assignments: []
 });
+
+export const emptyAxGanttModel = (): AxGanttParsedModel => ({
+    tasks: [],
+    links: []
+});
+
+export const DEFAULT_SCALE_PAYLOAD: ScalePayload = {
+    anchorYear: 2026,
+    weekLabelFormat: "W##",
+    scales: [
+        { unit: "year", step: 1, format: "year" },
+        { unit: "week", step: 1, format: "W##" }
+    ]
+};
+
+export const DEFAULT_COLUMNS_PAYLOAD: ColumnsPayload = {
+    columns: [{ name: "text", label: "Project", tree: true, width: 300, resize: true }]
+};

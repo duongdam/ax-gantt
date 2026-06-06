@@ -1,20 +1,20 @@
+import { configure } from "mobx";
 import { createContext, useContext, type ReactElement, type ReactNode } from "react";
 
-import { DatasourceStore } from "./DatasourceStore";
-import { DimensionStore } from "./DimensionStore";
 import { GanttStore } from "./GanttStore";
+import { JsonDataStore } from "./JsonDataStore";
+
+configure({ isolateGlobalState: true });
 
 export interface RootStore {
-    datasource: DatasourceStore;
+    jsonData: JsonDataStore;
     gantt: GanttStore;
-    dimension: DimensionStore;
 }
 
 export function createRootStore(): RootStore {
     return {
-        datasource: new DatasourceStore(),
-        gantt: new GanttStore(),
-        dimension: new DimensionStore()
+        jsonData: new JsonDataStore(),
+        gantt: new GanttStore()
     };
 }
 
@@ -37,14 +37,10 @@ export function useRootStore(): RootStore {
     return store;
 }
 
-export function useDatasourceStore(): DatasourceStore {
-    return useRootStore().datasource;
+export function useJsonDataStore(): JsonDataStore {
+    return useRootStore().jsonData;
 }
 
 export function useGanttStore(): GanttStore {
     return useRootStore().gantt;
-}
-
-export function useDimensionStore(): DimensionStore {
-    return useRootStore().dimension;
 }

@@ -2,7 +2,206 @@
 @import "dhtmlx-gantt/codebase/dhtmlxgantt.css";
 
 /* ------------------------------------------------------------------ */
-/* Gantt chart container (Phase 3+ implementation)                   */
+/* AxGantt — PM Roadmap layout (tree grid + year/week timeline)      */
+/* ------------------------------------------------------------------ */
+
+.axgantt-root {
+    position: relative;
+    width: 100%;
+    min-height: 400px;
+    box-sizing: border-box;
+}
+
+.axgantt-container {
+    position: relative;
+    width: 100%;
+    min-height: inherit;
+}
+
+.axgantt-chart {
+    width: 100%;
+    min-height: 400px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.axgantt-chart--blocked {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+/* 5-level project tree (left grid) */
+.axgantt-row--portfolio .gantt_cell {
+    font-weight: 700;
+    font-size: 13px;
+    color: #0f172a;
+    background: #e2e8f0 !important;
+}
+
+.axgantt-row--program .gantt_cell {
+    font-weight: 600;
+    font-size: 12px;
+    color: #1e293b;
+    background: #f1f5f9 !important;
+}
+
+.axgantt-row--phase .gantt_cell {
+    font-weight: 600;
+    font-size: 12px;
+    color: #334155;
+    background: #f8fafc !important;
+}
+
+.axgantt-row--product .gantt_cell {
+    font-weight: 500;
+    font-size: 12px;
+    color: #475569;
+}
+
+.axgantt-row--task .gantt_cell {
+    font-style: italic;
+    color: #64748b;
+}
+
+.gantt_task_line.axgantt-bar--portfolio {
+    opacity: 0.3;
+    border-radius: 4px;
+}
+
+.gantt_task_line.axgantt-bar--program {
+    opacity: 0.45;
+    border-radius: 4px;
+}
+
+.gantt_task_line.axgantt-bar--phase {
+    opacity: 0.55;
+    border-radius: 5px;
+}
+
+.gantt_task_line.axgantt-bar--product {
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+}
+
+.gantt_task_line.axgantt-bar--product .gantt_task_progress {
+    opacity: 0.85;
+}
+
+/* Year row (top) + week row (W01–W53) */
+.axgantt-chart .gantt_scale_line:first-child .gantt_scale_cell {
+    background: #1e3a5f;
+    color: #fff;
+    font-weight: 600;
+    font-size: 11px;
+    border-color: #1e3a5f;
+}
+
+.axgantt-chart .gantt_scale_line:nth-child(2) .gantt_scale_cell {
+    background: #f1f5f9;
+    color: #334155;
+    font-weight: 600;
+    font-size: 10px;
+}
+
+.axgantt-chart .gantt_grid_head_cell {
+    background: #f8fafc;
+    font-weight: 600;
+    color: #475569;
+    font-size: 12px;
+}
+
+.axgantt-loading {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.axgantt-loading__spinner {
+    width: 2rem;
+    height: 2rem;
+    border: 3px solid #e2e8f0;
+    border-top-color: #1e3a5f;
+    border-radius: 50%;
+    animation: axgantt-spin 0.8s linear infinite;
+}
+
+.axgantt-loading__message {
+    font-size: 0.875rem;
+    color: #475569;
+}
+
+@keyframes axgantt-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.axgantt-empty,
+.axgantt-error {
+    padding: 2rem;
+    text-align: center;
+    color: #64748b;
+}
+
+.axgantt-offline-notice {
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    background: #fef3c7;
+    color: #92400e;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+}
+
+/* PM Roadmap metadata row (above chart) */
+.axgantt-roadmap-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    color: #334155;
+}
+
+.axgantt-roadmap-header__segment {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.axgantt-roadmap-header__divider {
+    display: inline-block;
+    width: 1px;
+    height: 0.875rem;
+    margin: 0 0.75rem;
+    background: #cbd5e1;
+}
+
+.axgantt-roadmap-header__label {
+    margin-right: 0.35rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.axgantt-roadmap-header__value {
+    font-weight: 500;
+    color: #0f172a;
+}
+
+/* ------------------------------------------------------------------ */
+/* Legacy dhl-gantt-* (Studio preview + transitional)                */
 /* ------------------------------------------------------------------ */
 
 .dhl-gantt-root {
@@ -599,6 +798,36 @@
     margin-bottom: 12px;
 }
 
+.dhl-gantt-preview__layout {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.dhl-gantt-preview__tree {
+    flex: 0 0 38%;
+    padding: 4px 6px;
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.dhl-gantt-preview__timeline {
+    flex: 1;
+    padding: 4px 6px;
+    background: #1e3a5f;
+    color: #fff;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.axgantt-preview__header-meta {
+    margin-bottom: 8px;
+    font-size: 11px;
+}
+
 .dhl-gantt-preview__bars {
     display: flex;
     flex-direction: column;
@@ -628,4 +857,9 @@
     width: 30%;
     margin-left: 24%;
     background: #6366f1;
+}
+
+.axgantt-marker {
+    background-color: #dc2626;
+    opacity: 0.75;
 }

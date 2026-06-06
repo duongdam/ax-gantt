@@ -1,271 +1,276 @@
 import { observer } from "mobx-react-lite";
-import { ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import type { MendixDatasourceProps } from "../adapters/mendixDatasourceTypes";
+import type { AxGanttInteractionConfig, JsonGanttConfig } from "../engine/configBuilder";
 import { FeatureRegistry } from "../engine/FeatureRegistry";
 import type { GanttEngine } from "../engine/GanttEngine";
 import { createEventBridge, type EventBridge, type EventBridgeActions } from "../engine/eventBridge";
-import type { ViewMode } from "../engine/viewLayouts";
-import { useDatasourceSync } from "../hooks/useDatasourceSync";
+import { useJsonDataSync } from "../hooks/useJsonDataSync";
 import { useGanttLifecycle } from "../hooks/useGanttLifecycle";
-import type { MockLoadOptions } from "../mock/datasources";
-import { useDatasourceStore, useDimensionStore, useGanttStore } from "../store/StoreContext";
-import { DetailDialog } from "./DetailDialog";
-import { DimensionFilterBar } from "./DimensionFilterBar";
+import { useGanttStore, useJsonDataStore } from "../store/StoreContext";
 import { GanttEmptyState } from "./GanttEmptyState";
 import { GanttErrorToast } from "./GanttErrorToast";
 import { LoadingOverlay } from "./LoadingOverlay";
-import { TrialNoticeBanner } from "./TrialNoticeBanner";
 
 export interface GanttContainerProps extends EventBridgeActions {
     useMockData?: boolean;
-    mockOptions?: MockLoadOptions;
     readOnly?: boolean;
-    showToolbar?: boolean;
-    showDimensionFilterBar?: boolean;
-    enableDetailDialog?: boolean;
-    showTrialNotice?: boolean;
-    licenseKey?: string;
-    viewMode?: ViewMode;
-    rowHeight?: number;
-    barHeight?: number;
-    mendixDatasource?: MendixDatasourceProps;
+    ganttWidth?: number;
+    ganttHeight?: number;
+    defaultExpandTree?: boolean;
+    enableMarker?: boolean;
+    autoFit?: boolean;
+    autoScroll?: boolean;
+    fitTasks?: boolean;
+    initialScroll?: Date;
+    taskListJson?: string | null;
+    scaleJson?: string | null;
+    columnsJson?: string | null;
+    markerJson?: string | null;
+    ganttStartDate?: Date;
+    ganttEndDate?: Date;
     featureOptions?: ConstructorParameters<typeof FeatureRegistry>[0];
+    interactionOptions?: AxGanttInteractionConfig;
 }
 
-export const GanttContainer = observer(function GanttContainer({
-    useMockData = false,
-    mockOptions,
-    readOnly = false,
-    showToolbar: _showToolbar = true,
-    showDimensionFilterBar = true,
-    enableDetailDialog = true,
-    showTrialNotice = true,
-    licenseKey,
-    viewMode = "project",
-    rowHeight,
-    barHeight,
-    mendixDatasource,
-    featureOptions,
-    onTaskClickAction,
-    onTaskDblClickAction,
-    onTaskSelectedAction,
-    onScaleChangedAction,
-    onTaskChangedAction,
-    onBeforeTaskChangeAction,
-    onTaskCreatedAction,
-    onTaskDeletedAction,
-    onLinkCreatedAction,
-    onLinkDeletedAction,
-    onLinkValidationFailedAction,
-    onResourceClickAction
-}: GanttContainerProps): ReactElement {
-    const datasource = useDatasourceStore();
-    const ganttStore = useGanttStore();
-    const dimension = useDimensionStore();
-    const chartRef = useRef<HTMLDivElement>(null);
-    const engineRef = useRef<GanttEngine | null>(null);
-    const eventBridgeRef = useRef<EventBridge | null>(null);
-    const [isOffline, setIsOffline] = useState(() =>
-        typeof navigator !== "undefined" ? !navigator.onLine : false
-    );
-    const [trialDismissed, setTrialDismissed] = useState(false);
+export const GanttContainer = observer(
+    ({
+        useMockData = false,
+        readOnly = false,
+        ganttWidth,
+        ganttHeight = 600,
+        defaultExpandTree = true,
+        enableMarker = false,
+        autoFit = false,
+        autoScroll = true,
+        fitTasks = false,
+        initialScroll,
+        taskListJson,
+        scaleJson,
+        columnsJson,
+        markerJson,
+        ganttStartDate,
+        ganttEndDate,
+        featureOptions,
+        interactionOptions,
+        onTaskDbClickAction,
+        onTaskMoveAction,
+        onTaskResizeAction,
+        onTaskCreateAction,
+        onTaskSelectAction,
+        onTaskRowDragAction,
+        onTaskCheckAction,
+        onTaskUndoAction
+    }: GanttContainerProps): ReactElement => {
+        const jsonData = useJsonDataStore();
+        const ganttStore = useGanttStore();
+        const chartRef = useRef<HTMLDivElement>(null);
+        const engineRef = useRef<GanttEngine | null>(null);
+        const eventBridgeRef = useRef<EventBridge | null>(null);
+        const [isOffline, setIsOffline] = useState(() =>
+            typeof navigator !== "undefined" ? !navigator.onLine : false
+        );
+        useEffect(() => {
+            const handleOnline = (): void => setIsOffline(false);
+            const handleOffline = (): void => setIsOffline(true);
+            window.addEventListener("online", handleOnline);
+            window.addEventListener("offline", handleOffline);
+            return () => {
+                window.removeEventListener("online", handleOnline);
+                window.removeEventListener("offline", handleOffline);
+            };
+        }, []);
 
-    useEffect(() => {
-        const handleOnline = (): void => setIsOffline(false);
-        const handleOffline = (): void => setIsOffline(true);
-        window.addEventListener("online", handleOnline);
-        window.addEventListener("offline", handleOffline);
-        return () => {
-            window.removeEventListener("online", handleOnline);
-            window.removeEventListener("offline", handleOffline);
-        };
-    }, []);
+        const features = useMemo(
+            () =>
+                new FeatureRegistry({
+                    readOnly,
+                    isOffline,
+                    ...featureOptions
+                }),
+            [readOnly, isOffline, featureOptions]
+        );
 
-    const features = useMemo(
-        () =>
-            new FeatureRegistry({
-                readOnly,
-                licenseKey,
-                isOffline,
-                ...featureOptions
+        useJsonDataSync({
+            useMockData,
+            taskListJson,
+            scaleJson,
+            columnsJson,
+            markerJson: enableMarker ? markerJson : null
+        });
+
+        const jsonGanttConfig = useMemo<JsonGanttConfig>(
+            () => ({
+                scale: jsonData.scale,
+                columns: jsonData.columns,
+                markers: jsonData.markers,
+                ganttStartDate,
+                ganttEndDate,
+                defaultExpandTree,
+                interaction: {
+                    ...interactionOptions,
+                    enableMarkers: enableMarker
+                }
             }),
-        [readOnly, licenseKey, isOffline, featureOptions]
-    );
+            [
+                jsonData.scale,
+                jsonData.columns,
+                jsonData.markers,
+                ganttStartDate,
+                ganttEndDate,
+                defaultExpandTree,
+                enableMarker,
+                interactionOptions
+            ]
+        );
 
-    useDatasourceSync({ useMockData, mockOptions, ...(mendixDatasource ?? {}) });
+        const isDataReady = !jsonData.isLoading && !jsonData.isError && jsonData.hasData;
+        const isChartReady = isDataReady;
 
-    const sliceVersion = dimension.sliceVersion;
-    const primaryGroupDimension = dimension.primaryGroupDimension;
+        const parseChart = useCallback(
+            (engine: GanttEngine) => {
+                if (!engine.isInitialized()) {
+                    return;
+                }
+                engine.applyJsonConfig(features, jsonGanttConfig);
+                engine.parseAxGanttModel(jsonData.model, { defaultExpandTree, json: jsonGanttConfig });
+            },
+            [jsonData.model, jsonGanttConfig, defaultExpandTree, features]
+        );
 
-    const isDataReady = !datasource.isLoading && !datasource.isError && datasource.hasData;
-    const isFilteredEmpty =
-        isDataReady && dimension.hasActiveFilters && dimension.getVisibleTaskCount(datasource.model) === 0;
-    const isChartReady = isDataReady;
+        const bridgeActions = useMemo<EventBridgeActions>(
+            () => ({
+                onTaskDbClickAction,
+                onTaskMoveAction,
+                onTaskResizeAction,
+                onTaskCreateAction,
+                onTaskSelectAction,
+                onTaskRowDragAction,
+                onTaskCheckAction,
+                onTaskUndoAction
+            }),
+            [
+                onTaskDbClickAction,
+                onTaskMoveAction,
+                onTaskResizeAction,
+                onTaskCreateAction,
+                onTaskSelectAction,
+                onTaskRowDragAction,
+                onTaskCheckAction,
+                onTaskUndoAction
+            ]
+        );
 
-    const parseChart = useCallback(
-        (engine: GanttEngine) => {
-            if (!engine.isInitialized()) {
+        const attachBridge = useCallback(
+            (engine: GanttEngine) => {
+                if (eventBridgeRef.current) {
+                    eventBridgeRef.current.detach(engine.getGantt());
+                }
+
+                const bridge = createEventBridge();
+                bridge.attach(engine.getGantt(), {
+                    jsonData,
+                    ganttStore,
+                    features,
+                    engine,
+                    ...bridgeActions
+                });
+                eventBridgeRef.current = bridge;
+            },
+            [jsonData, ganttStore, features, bridgeActions]
+        );
+
+        const handleEngineReady = useCallback(
+            (engine: GanttEngine) => {
+                engineRef.current = engine;
+                parseChart(engine);
+                attachBridge(engine);
+            },
+            [parseChart, attachBridge]
+        );
+
+        useGanttLifecycle({
+            containerRef: chartRef,
+            features,
+            scale: ganttStore.view.scale,
+            viewMode: "project",
+            json: jsonGanttConfig,
+            isReady: isChartReady,
+            onEngineReady: handleEngineReady
+        });
+
+        useEffect(() => {
+            if (engineRef.current) {
+                parseChart(engineRef.current);
+            }
+        }, [parseChart]);
+
+        useEffect(() => {
+            const engine = engineRef.current;
+            if (!engine?.isInitialized()) {
                 return;
             }
-            const sliced = dimension.getSlicedModel(datasource.model);
-            engine.parse(sliced, { groupBy: primaryGroupDimension, viewMode });
-        },
-        [datasource.model, sliceVersion, primaryGroupDimension, dimension, viewMode]
-    );
-
-    const bridgeActions = useMemo<EventBridgeActions>(
-        () => ({
-            onTaskClickAction,
-            onTaskDblClickAction,
-            onTaskSelectedAction,
-            onScaleChangedAction,
-            onTaskChangedAction,
-            onBeforeTaskChangeAction,
-            onTaskCreatedAction,
-            onTaskDeletedAction,
-            onLinkCreatedAction,
-            onLinkDeletedAction,
-            onLinkValidationFailedAction,
-            onResourceClickAction
-        }),
-        [
-            onTaskClickAction,
-            onTaskDblClickAction,
-            onTaskSelectedAction,
-            onScaleChangedAction,
-            onTaskChangedAction,
-            onBeforeTaskChangeAction,
-            onTaskCreatedAction,
-            onTaskDeletedAction,
-            onLinkCreatedAction,
-            onLinkDeletedAction,
-            onLinkValidationFailedAction,
-            onResourceClickAction
-        ]
-    );
-
-    const attachBridge = useCallback(
-        (engine: GanttEngine) => {
-            if (eventBridgeRef.current) {
-                eventBridgeRef.current.detach(engine.getGantt());
+            if (autoFit || fitTasks) {
+                engine.fitTasks();
             }
-
-            const bridge = createEventBridge();
-            bridge.attach(engine.getGantt(), {
-                datasource,
-                ganttStore,
-                features,
-                engine,
-                enableDetailDialog,
-                ...bridgeActions
-            });
-            eventBridgeRef.current = bridge;
-        },
-        [datasource, ganttStore, features, enableDetailDialog, bridgeActions]
-    );
-
-    const handleEngineReady = useCallback(
-        (engine: GanttEngine) => {
-            engineRef.current = engine;
-            parseChart(engine);
-            attachBridge(engine);
-        },
-        [parseChart, attachBridge]
-    );
-
-    useGanttLifecycle({
-        containerRef: chartRef,
-        features,
-        scale: ganttStore.view.scale,
-        viewMode,
-        licenseKey,
-        rowHeight,
-        barHeight,
-        isReady: isChartReady,
-        onEngineReady: handleEngineReady
-    });
-
-    useEffect(() => {
-        if (engineRef.current) {
-            parseChart(engineRef.current);
-        }
-    }, [parseChart]);
-
-    useEffect(() => {
-        const engine = engineRef.current;
-        if (engine?.isInitialized() && engine.getViewMode() !== viewMode) {
-            engine.setViewMode(viewMode, features, ganttStore.view.scale);
-            parseChart(engine);
-        }
-    }, [viewMode, features, ganttStore.view.scale, parseChart]);
-
-    useEffect(() => {
-        if (engineRef.current?.isInitialized()) {
-            attachBridge(engineRef.current);
-        }
-    }, [attachBridge]);
-
-    useEffect(() => {
-        return () => {
-            const engine = engineRef.current;
-            if (engine?.isInitialized() && eventBridgeRef.current) {
-                eventBridgeRef.current.detach(engine.getGantt());
-                eventBridgeRef.current = null;
+            if (initialScroll) {
+                engine.scrollToDate(initialScroll);
+            } else if (autoScroll) {
+                engine.scrollToToday();
             }
-        };
-    }, []);
+        }, [autoFit, fitTasks, initialScroll, autoScroll, isChartReady]);
 
-    const showTrialBanner = showTrialNotice && !licenseKey?.trim() && !trialDismissed;
+        useEffect(() => {
+            if (engineRef.current?.isInitialized()) {
+                attachBridge(engineRef.current);
+            }
+        }, [attachBridge]);
 
-    return (
-        <div className="dhl-gantt-container">
-            <TrialNoticeBanner visible={showTrialBanner} onDismiss={() => setTrialDismissed(true)} />
-            {isOffline && (
-                <div className="dhl-gantt-offline-notice" role="status">
-                    Offline mode — chart is read-only until connectivity is restored.
-                </div>
-            )}
-            <LoadingOverlay visible={datasource.isLoading} />
-            <GanttErrorToast />
-            <DetailDialog />
+        useEffect(() => {
+            return () => {
+                const engine = engineRef.current;
+                if (engine?.isInitialized() && eventBridgeRef.current) {
+                    eventBridgeRef.current.detach(engine.getGantt());
+                    eventBridgeRef.current = null;
+                }
+            };
+        }, []);
 
-            {/* GanttToolbar hidden — zoom/scale controls not needed for executive portfolio view yet
-            {showToolbar && isChartReady && !isFilteredEmpty && (
-                <GanttToolbar engine={engineRef.current} onScaleChanged={handleToolbarScaleChange} />
-            )}
-            */}
+        const errorMessage = jsonData.parseError ?? undefined;
+        const chartStyle = useMemo(() => {
+            const style: CSSProperties = { height: ganttHeight };
+            if (ganttWidth && ganttWidth > 0) {
+                style.width = ganttWidth;
+            }
+            return style;
+        }, [ganttHeight, ganttWidth]);
 
-            {showDimensionFilterBar && isChartReady && (
-                <DimensionFilterBar
-                    onWeekSelected={week => {
-                        ganttStore.setScrollDate(week.start);
-                        engineRef.current?.scrollToDate(week.start);
-                    }}
-                />
-            )}
+        return (
+            <div className="axgantt-container">
+                {isOffline && (
+                    <div className="axgantt-offline-notice" role="status">
+                        Offline mode — chart is read-only until connectivity is restored.
+                    </div>
+                )}
+                <LoadingOverlay visible={jsonData.isLoading} />
+                <GanttErrorToast />
 
-            {datasource.isError && !datasource.isLoading && (
-                <GanttEmptyState variant="error" message={datasource.error ?? undefined} />
-            )}
+                {jsonData.isError && !jsonData.isLoading && <GanttEmptyState variant="error" message={errorMessage} />}
 
-            {!datasource.isError && !datasource.isLoading && !datasource.hasData && (
-                <GanttEmptyState variant="empty" />
-            )}
+                {!jsonData.isError && !jsonData.isLoading && !jsonData.hasData && (
+                    <GanttEmptyState variant="empty" message={errorMessage} />
+                )}
 
-            {isFilteredEmpty && (
-                <GanttEmptyState variant="filtered" onClearFilters={() => dimension.clearAllFilters()} />
-            )}
-
-            {isChartReady && (
-                <div
-                    ref={chartRef}
-                    className={`dhl-gantt-chart${datasource.isLoading || isFilteredEmpty ? " dhl-gantt-chart--blocked" : ""}`}
-                    aria-label="Gantt schedule chart"
-                    aria-busy={datasource.isLoading}
-                    hidden={isFilteredEmpty}
-                />
-            )}
-        </div>
-    );
-});
+                {isChartReady && (
+                    <div
+                        ref={chartRef}
+                        className={`axgantt-chart${jsonData.isLoading ? " axgantt-chart--blocked" : ""}`}
+                        style={chartStyle}
+                        aria-label="PM Roadmap Gantt chart"
+                        aria-busy={jsonData.isLoading}
+                    />
+                )}
+            </div>
+        );
+    }
+);

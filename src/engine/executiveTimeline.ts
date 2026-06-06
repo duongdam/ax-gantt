@@ -11,10 +11,7 @@ export function startOfWeek(date: Date): Date {
     return value;
 }
 
-export function getWeekIndexFromDate(
-    date: Date,
-    anchorYear: number = EXECUTIVE_TIMELINE_ANCHOR_YEAR
-): number {
+export function getWeekIndexFromDate(date: Date, anchorYear: number = EXECUTIVE_TIMELINE_ANCHOR_YEAR): number {
     const anchor = startOfWeek(new Date(anchorYear, 0, 1));
     const weekStart = startOfWeek(date);
     const diffWeeks = Math.round((weekStart.getTime() - anchor.getTime()) / (7 * 24 * 60 * 60 * 1000));
