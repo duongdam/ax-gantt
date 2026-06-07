@@ -12,12 +12,12 @@ export const GanttErrorToast = observer((): ReactElement | null => {
     }
 
     return (
-        <div className={`dhl-gantt-toast dhl-gantt-toast--${message.type}`} role="alert">
-            <div className="dhl-gantt-toast__content">
-                {message.code && <span className="dhl-gantt-toast__code">{message.code}</span>}
+        <div className={`axgantt-toast axgantt-toast--${message.type}`} role="alert">
+            <div className="axgantt-toast__content">
+                {message.code && <span className="axgantt-toast__code">{message.code}</span>}
                 <span>{message.text}</span>
             </div>
-            <button type="button" className="dhl-gantt-toast__close" onClick={() => ganttStore.clearUiMessage()}>
+            <button type="button" className="axgantt-toast__close" onClick={() => ganttStore.clearUiMessage()}>
                 ×
             </button>
         </div>

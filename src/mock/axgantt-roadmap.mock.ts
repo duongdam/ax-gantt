@@ -18,82 +18,82 @@ export const MOCK_TASK_LIST: TaskListPayload = {
     tasks: [
         {
             id: "PF-1",
-            text: "Samsung DS PM Roadmap 2024–2028",
-            start: "2024-01-01",
+            text: "Samsung DS PM Roadmap 2025–2028",
+            start: "2025-01-01",
             end: "2028-12-31",
             type: "project",
             open: true,
             level: "portfolio"
         },
 
-        // ── 2024 ──────────────────────────────────────────────────────────────
+        // ── 2025 ──────────────────────────────────────────────────────────────
         {
-            id: "PRG-2024",
-            text: "2024 · Foundation",
+            id: "PRG-2025",
+            text: "2025 · Foundation",
             parent: "PF-1",
-            start: "2024-01-01",
-            end: "2024-12-31",
+            start: "2025-01-01",
+            end: "2025-12-31",
             type: "project",
             open: true,
             level: "program"
         },
         {
-            id: "PH-2024-1",
-            text: "Phase I · 2024",
-            parent: "PRG-2024",
-            start: "2024-01-08",
-            end: "2024-06-30",
+            id: "PH-2025-1",
+            text: "Phase I · 2025",
+            parent: "PRG-2025",
+            start: "2025-01-06",
+            end: "2025-06-30",
             type: "project",
             open: true,
             level: "phase"
         },
         {
-            id: "PROD-2024-FE",
-            text: "Legacy stack refresh",
-            parent: "PH-2024-1",
-            start: "2024-02-05",
-            end: "2024-05-17",
+            id: "PROD-2025-FE",
+            text: "Platform readiness",
+            parent: "PH-2025-1",
+            start: "2025-02-03",
+            end: "2025-05-16",
             type: "task",
-            progress: 1,
+            progress: 0.85,
             color: "#64748B",
             level: "product"
         },
         {
-            id: "TSK-2024-ARCH",
+            id: "TSK-2025-ARCH",
             text: "Architecture review",
-            parent: "PROD-2024-FE",
-            start: "2024-04-15",
-            end: "2024-04-15",
+            parent: "PROD-2025-FE",
+            start: "2025-04-14",
+            end: "2025-04-14",
             type: "milestone",
             level: "task"
         },
         {
-            id: "PH-2024-2",
-            text: "Phase II · 2024",
-            parent: "PRG-2024",
-            start: "2024-07-01",
-            end: "2024-12-31",
+            id: "PH-2025-2",
+            text: "Phase II · 2025",
+            parent: "PRG-2025",
+            start: "2025-07-01",
+            end: "2025-12-31",
             type: "project",
             open: true,
             level: "phase"
         },
         {
-            id: "PROD-2024-BE",
-            text: "Backend migration",
-            parent: "PH-2024-2",
-            start: "2024-07-08",
-            end: "2024-11-22",
+            id: "PROD-2025-BE",
+            text: "Integration hardening",
+            parent: "PH-2025-2",
+            start: "2025-07-07",
+            end: "2025-11-21",
             type: "task",
-            progress: 1,
+            progress: 0.6,
             color: "#475569",
             level: "product"
         },
         {
-            id: "TSK-2024-EOL",
-            text: "Legacy sunset",
-            parent: "PROD-2024-BE",
-            start: "2024-12-16",
-            end: "2024-12-16",
+            id: "TSK-2025-GO",
+            text: "Go-live",
+            parent: "PROD-2025-BE",
+            start: "2025-12-15",
+            end: "2025-12-15",
             type: "milestone",
             level: "task"
         },
@@ -352,26 +352,6 @@ export const MOCK_TASK_LIST: TaskListPayload = {
             type: "milestone",
             level: "task"
         },
-        {
-            id: "PROD-2028-YIELD",
-            text: "Yield ramp",
-            parent: "PH-2028-1",
-            start: "2028-09-04",
-            end: "2028-12-21",
-            type: "task",
-            progress: 0,
-            color: "#F59E0B",
-            level: "product"
-        },
-        {
-            id: "TSK-2028-RAMP",
-            text: "Production ramp",
-            parent: "PROD-2028-YIELD",
-            start: "2028-12-14",
-            end: "2028-12-14",
-            type: "milestone",
-            level: "task"
-        },
 
         {
             id: "TSK-YEAR-OPEN",
@@ -395,8 +375,9 @@ export const MOCK_TASK_LIST: TaskListPayload = {
     links: [
         { id: "LN-1", source: "TSK-FREEZE", target: "PROD-BETA", type: 0 },
         { id: "LN-2", source: "TSK-RTL", target: "TSK-TAPEOUT", type: 0 },
-        { id: "LN-3", source: "TSK-2024-EOL", target: "PROD-2027-NPU", type: 0 },
-        { id: "LN-4", source: "TSK-2027-GA", target: "PROD-2028-FAB", type: 0 }
+        { id: "LN-3", source: "TSK-2025-GO", target: "PROD-ALPHA", type: 0 },
+        { id: "LN-4", source: "TSK-GAMMA-GA", target: "PROD-2027-NPU", type: 0 },
+        { id: "LN-5", source: "TSK-2027-GA", target: "PROD-2028-FAB", type: 0 }
     ]
 };
 
@@ -416,10 +397,10 @@ export const MOCK_COLUMNS_JSON = JSON.stringify({
 export const MOCK_MARKER_JSON = JSON.stringify({
     markers: [
         {
-            start_date: "2024-04-15",
+            start_date: "2025-04-14",
             css: "axgantt-marker",
             text: "Arch review",
-            title: "2024 — architecture review complete"
+            title: "2025 — architecture review complete"
         },
         {
             start_date: "2026-02-23",
@@ -462,7 +443,7 @@ export const MOCK_HEADER = {
 } as const;
 
 export const MOCK_TIMELINE = {
-    ganttStartDate: "2024-01-01",
+    ganttStartDate: "2025-01-01",
     ganttEndDate: "2028-12-31"
 } as const;
 

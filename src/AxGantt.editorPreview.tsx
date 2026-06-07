@@ -30,21 +30,21 @@ export function preview(props: AxGanttPreviewProps): ReactElement {
             {headerParts.length > 0 && (
                 <div className="axgantt-roadmap-header axgantt-preview__header-meta">{headerParts.join("  ·  ")}</div>
             )}
-            <div className="dhl-gantt-preview">
-                <div className="dhl-gantt-preview__header">Ax Gantt</div>
-                <div className="dhl-gantt-preview__meta">
+            <div className="axgantt-preview">
+                <div className="axgantt-preview__header">Ax Gantt</div>
+                <div className="axgantt-preview__meta">
                     {mode} · {height}px
                     {props.readOnly ? " · Read only" : ""}
                     {!props.mayEdit ? " · Edit locked" : ""}
                 </div>
-                <div className="dhl-gantt-preview__layout" aria-hidden="true">
-                    <span className="dhl-gantt-preview__tree">Project tree</span>
-                    <span className="dhl-gantt-preview__timeline">2026 · W01–W53</span>
+                <div className="axgantt-preview__layout" aria-hidden="true">
+                    <span className="axgantt-preview__tree">Project tree</span>
+                    <span className="axgantt-preview__timeline">2025–2028 · W01–53</span>
                 </div>
-                <div className="dhl-gantt-preview__bars" aria-hidden="true">
-                    <span className="dhl-gantt-preview__bar dhl-gantt-preview__bar--1" />
-                    <span className="dhl-gantt-preview__bar dhl-gantt-preview__bar--2" />
-                    <span className="dhl-gantt-preview__bar dhl-gantt-preview__bar--3" />
+                <div className="axgantt-preview__bars" aria-hidden="true">
+                    <span className="axgantt-preview__bar axgantt-preview__bar--1" />
+                    <span className="axgantt-preview__bar axgantt-preview__bar--2" />
+                    <span className="axgantt-preview__bar axgantt-preview__bar--3" />
                 </div>
             </div>
         </div>

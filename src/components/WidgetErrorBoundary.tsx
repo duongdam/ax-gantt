@@ -23,7 +23,7 @@ export class WidgetErrorBoundary extends Component<WidgetErrorBoundaryProps, Wid
     render(): ReactNode {
         if (this.state.error) {
             return (
-                <div className="dhl-gantt-fatal-error" role="alert">
+                <div className="axgantt-fatal-error" role="alert">
                     <strong>{this.props.widgetName ?? "DHL Gantt Chart"} failed to render.</strong>
                     <p>{this.state.error.message}</p>
                     <p>Open the browser console (F12) for details.</p>

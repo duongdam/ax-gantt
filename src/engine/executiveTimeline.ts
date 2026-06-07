@@ -18,6 +18,17 @@ export function getWeekIndexFromDate(date: Date, anchorYear: number = EXECUTIVE_
     return Math.max(1, diffWeeks + 1);
 }
 
+/** ISO-8601 week number (1–53) for the week containing `date`. */
+export function getIsoWeekNumber(date: Date): number {
+    const target = new Date(date);
+    target.setHours(0, 0, 0, 0);
+    // ISO week-year is defined by the week's Thursday.
+    target.setDate(target.getDate() + 3 - ((target.getDay() + 6) % 7));
+    const week1 = new Date(target.getFullYear(), 0, 4);
+    week1.setDate(week1.getDate() + 3 - ((week1.getDay() + 6) % 7));
+    return 1 + Math.round((target.getTime() - week1.getTime()) / (7 * 24 * 60 * 60 * 1000));
+}
+
 export function getPhaseLabel(date: Date): string {
     const year = date.getFullYear();
     return date.getMonth() < 6 ? `Phase I · ${year}` : `Phase II · ${year}`;
@@ -92,12 +103,12 @@ export function applyExecutiveGridPresentation(gantt: GanttStatic): void {
 
     gantt.templates.grid_row_class = (_start, _end, task: Task) => {
         const level = (task as Task & { cf_level?: string }).cf_level;
-        return level ? `dhl-gantt-row--${level}` : "";
+        return level ? `axgantt-row--${level}` : "";
     };
 
     gantt.templates.task_class = (_start, _end, task: Task) => {
         const level = (task as Task & { cf_level?: string }).cf_level;
-        return level ? `dhl-gantt-bar--${level}` : "";
+        return level ? `axgantt-bar--${level}` : "";
     };
 
     gantt.templates.task_text = (_start, _end, task: Task) => {

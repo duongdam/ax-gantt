@@ -137,6 +137,8 @@ export function applyGanttConfig(
             applyJsonColumns(gantt, json.columns, interaction, flags.readOnly);
         }
         applyTimelineBounds(gantt, json.ganttStartDate, json.ganttEndDate);
+        // Keep explicit roadmap range; do not shrink to task min/max.
+        gantt.config.fit_tasks = !(json.ganttStartDate && json.ganttEndDate);
     } else if (scale === "week") {
         applyExecutiveTimelineScales(gantt);
         applyExecutiveGridPresentation(gantt);
@@ -178,17 +180,14 @@ export function applyGanttConfig(
         applyTooltipPlugin(gantt);
     }
 
-    if (flags.showTodayMarker) {
-        applyTodayMarker(gantt);
-    }
-
     const enableClickDrag = !flags.readOnly && Boolean(interaction?.clickDrag);
+    const enableMarkers = flags.showTodayMarker || Boolean(interaction?.enableMarkers);
 
     gantt.plugins({
         multiselect: flags.enableMultiselect,
         keyboard_navigation: flags.enableKeyboard,
         tooltip: flags.enableTooltips,
-        marker: flags.showTodayMarker || Boolean(interaction?.enableMarkers),
+        marker: enableMarkers,
         click_drag: enableClickDrag,
         fullscreen: true,
         grouping: true,
@@ -198,6 +197,10 @@ export function applyGanttConfig(
         export_api: features.isProFeatureEnabled("enableExport")
     });
 
+    if (flags.showTodayMarker) {
+        applyTodayMarker(gantt);
+    }
+
     if (enableClickDrag) {
         gantt.config.click_drag = gantt.config.click_drag ?? { singleRow: true };
     } else {
@@ -205,7 +208,20 @@ export function applyGanttConfig(
     }
 
     gantt.config.resources = false;
-    initZoomExtension(gantt);
+
+    // JSON year/week scale must not be replaced by zoom extension (defaults to hour/day).
+    if (!json?.scale) {
+        initZoomExtension(gantt);
+    }
+}
+
+export function reapplyJsonTimeline(gantt: GanttStatic, json: JsonGanttConfig): void {
+    if (json.scale) {
+        applyScalePayload(gantt, json.scale);
+    }
+    if (json.ganttStartDate || json.ganttEndDate) {
+        applyTimelineBounds(gantt, json.ganttStartDate, json.ganttEndDate);
+    }
 }
 
 export function setGanttScale(gantt: GanttStatic, scale: GanttScale, jsonScale?: ScalePayload): void {

@@ -35,11 +35,13 @@ Mendix Microflow/Expression
       │
       │  JSON String
       ▼
-  taskListJson ─────────► parse ──► chart render
-  scaleJson    ─────────► parse ──► timeline scale
-  columnsJson  ─────────► parse ──► grid columns
-  markerJson   ─────────► parse ──► timeline markers
+  taskListJson ─────────► parse ──► tasks + bars + WBS tree
+  scaleJson    ─────────► parse ──► timeline header (năm / tuần)
+  columnsJson  ─────────► parse ──► grid columns (trái)
+  markerJson   ─────────► parse ──► vạch mốc timeline (cần enableMarker)
 ```
+
+Chi tiết từng field: [12. JSON Reference](./12-json-reference.md).
 
 Backend (Mendix) chịu trách nhiệm serialize entity → JSON string. Widget chịu trách nhiệm parse, validate, render.
 

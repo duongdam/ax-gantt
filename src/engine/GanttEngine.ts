@@ -4,7 +4,7 @@ import { mapModelToDhtmlx } from "../adapters/mapAxGanttModel";
 import { modelTaskToGanttPatch } from "../adapters/mapTasksFromGantt";
 import type { AxGanttParsedModel, GanttNormalizedModel, GanttTask } from "../stores/types";
 import type { ScalePayload } from "../stores/types";
-import { applyGanttConfig, type JsonGanttConfig, setGanttScale } from "./configBuilder";
+import { applyGanttConfig, type JsonGanttConfig, reapplyJsonTimeline, setGanttScale } from "./configBuilder";
 import type { FeatureRegistry } from "./FeatureRegistry";
 import { applyJsonMarkers, refreshTodayMarker } from "./plugins/markers";
 import type { GanttScale } from "../stores/types";
@@ -103,6 +103,7 @@ export class GanttEngine {
 
         if (options?.json) {
             applyJsonMarkers(gantt, options.json.markers, Boolean(options.json.interaction?.enableMarkers));
+            reapplyJsonTimeline(gantt, options.json);
         }
 
         gantt.render();
@@ -128,7 +129,7 @@ export class GanttEngine {
             return;
         }
         setGanttScale(gantt, scale, jsonScale);
-        if (gantt.ext?.zoom?.setLevel) {
+        if (!jsonScale && gantt.ext?.zoom?.setLevel) {
             gantt.ext.zoom.setLevel(scale);
         }
     }
@@ -276,7 +277,7 @@ export class GanttEngine {
 
             event.preventDefault();
             const menu = document.createElement("div");
-            menu.className = "dhl-gantt-context-menu";
+            menu.className = "axgantt-context-menu";
             menu.style.position = "fixed";
             menu.style.left = `${(event as MouseEvent).clientX}px`;
             menu.style.top = `${(event as MouseEvent).clientY}px`;

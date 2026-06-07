@@ -31,9 +31,9 @@ export const GanttEmptyState = observer(({ variant, message, onRetry }: GanttEmp
 
     return (
         <div className={className} role={variant === "error" ? "alert" : "status"}>
-            <p className="dhl-gantt-empty__message">{text}</p>
+            <p className="axgantt-empty__message">{text}</p>
             {variant === "error" && (
-                <button type="button" className="dhl-gantt-empty__retry" onClick={handleRetry}>
+                <button type="button" className="axgantt-empty__retry" onClick={handleRetry}>
                     Retry
                 </button>
             )}

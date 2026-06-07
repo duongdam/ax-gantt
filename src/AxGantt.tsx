@@ -1,7 +1,7 @@
 import { ActionValue } from "mendix";
 import { type CSSProperties, ReactElement, useCallback, useMemo } from "react";
 import { observer } from "mobx-react-lite";
-import { ConfigProvider } from "antd";
+import ConfigProvider from "antd/es/config-provider";
 import { useAtlasTheme } from "./hooks/useAtlasTheme";
 
 import { GanttContainer } from "./components/GanttContainer";

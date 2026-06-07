@@ -2,34 +2,34 @@
 
 Mock data phục vụ phát triển và demo mà không cần Mendix backend.
 
+**Giải thích chi tiết mọi field JSON:** [12. JSON Reference](./12-json-reference.md)  
+**File export đầy đủ:** [`mock/axgantt-roadmap.mock.full.json`](../mock/axgantt-roadmap.mock.full.json)
+
 ## Bật mock mode
 
 Widget property: `useMockData = true`
 
-Khi bật, widget bỏ qua tất cả JSON expressions và load `axgantt-roadmap.mock.ts` thay thế.
+Khi bật, widget bỏ qua JSON expressions và load `src/mock/axgantt-roadmap.mock.ts`.
 
-## File mock
-
-File: `src/mock/axgantt-roadmap.mock.ts`
-
-Export hàm `getAxGanttRoadmapMock()` trả về toàn bộ mock data:
+## Bundle mock
 
 ```typescript
-export function getAxGanttRoadmapMock(): AxGanttRoadmapMock {
-  return {
-    taskListJson: string,       // JSON tasks + links
-    scaleJson: string,          // JSON scale config
-    columnsJson: string,        // JSON columns
-    markerJson: string,         // JSON markers
-    roadmapNo: string,          // "Msoc251030-155"
-    roadmapRevision: string,    // "3"
-    roadmapRevisedBy: string,   // "mxadmin"
-    roadmapRevisedAt: string,   // ISO datetime
-  };
+// getAxGanttRoadmapMock()
+{
+  taskListJson: string,   // → tasks + links
+  scaleJson: string,      // → timeline header năm/tuần
+  columnsJson: string,    // → cột grid trái
+  markerJson: string,     // → vạch mốc timeline
+  ganttStartDate: string, // → clip timeline (widget prop)
+  ganttEndDate: string,
+  roadmapNo: string,      // → PM header (widget props)
+  roadmapRevision: string,
+  roadmapRevisedBy: string,
+  roadmapRevisedAt: string
 }
 ```
 
-## Cấu trúc hierarchy (5 levels)
+## Hierarchy (5 levels)
 
 ```
 Portfolio (type=project, level=portfolio)
@@ -39,63 +39,57 @@ Portfolio (type=project, level=portfolio)
             └── Task / Milestone (type=task|milestone, level=task)
 ```
 
-## Thống kê
+## Thống kê mock (2025–2028)
 
 | Metric | Giá trị |
 |--------|---------|
-| Levels | 5 (portfolio → program → phase → product → task) |
-| Total tasks | ~17 |
-| Programs | 2 (Advanced Logic, Memory Technology) |
-| Phases | 3 (Phase I + Phase II + Phase I-Mem) |
-| Products | 4 (Product Alpha, Beta, Gamma, DRAM Gen-X) |
-| Milestones | 4 (Design freeze, RTL complete, Tape-out, ...) |
-| Links | 2 (FS dependencies) |
-| Timeline markers | 3 (Today, Design freeze, Tape-out) |
-| Anchor year | 2026 (53 ISO weeks) |
+| Timeline | 2025-01-01 → 2028-12-31 |
+| Total tasks | 35 |
+| Programs | 5 (2025 Foundation, 2026 AL + Memory, 2027 AI, 2028 Fab) |
+| Links | 5 (Finish-to-Start) |
+| Timeline markers | 6 |
+| Scale | year + week (`W##` → Tuần 01…) |
+| Columns | 1 (`Project`, tree) |
+| Header | Msoc251030-155, rev 3, mxadmin |
 
-## Cấu trúc mock task
+## Ví dụ task
 
-```typescript
+```json
 {
-  "id":       "PROD-ALPHA",
-  "text":     "Product Alpha",
-  "start":    "2026-02-02",
-  "end":      "2026-05-18",
-  "parent":   "PH-AL-1",
-  "type":     "task",
+  "id": "PROD-ALPHA",
+  "text": "Product Alpha",
+  "start": "2026-02-02",
+  "end": "2026-05-18",
+  "parent": "PH-AL-1",
+  "type": "task",
   "progress": 0.35,
-  "color":    "#4F46E5",
-  "level":    "product",
-  "owner":    "nguyen.van.a",
-  "status":   "In Progress"
+  "color": "#4F46E5",
+  "level": "product"
 }
 ```
 
-## PM Roadmap Header mock
+## Links mock
 
-```
-roadmapNo:        "Msoc251030-155"
-roadmapRevision:  "3"
-roadmapRevisedBy: "mxadmin"
-roadmapRevisedAt: "2026-06-07T00:00:00.000Z"
-```
+| Link | Source | Target |
+|------|--------|--------|
+| LN-1 | TSK-FREEZE | PROD-BETA |
+| LN-2 | TSK-RTL | TSK-TAPEOUT |
+| LN-3 | TSK-2025-GO | PROD-ALPHA |
+| LN-4 | TSK-GAMMA-GA | PROD-2027-NPU |
+| LN-5 | TSK-2027-GA | PROD-2028-FAB |
 
-## Dependency links mock
+## Markers mock
 
-| Link | Source | Target | Type |
-|------|--------|--------|------|
-| LN-1 | TSK-FREEZE (Design freeze) | PROD-BETA (Product Beta) | FS (0) |
-| LN-2 | TSK-RTL (RTL complete) | TSK-TAPEOUT (Tape-out) | FS (0) |
+| text | Date |
+|------|------|
+| Arch review | 2025-04-14 |
+| Design freeze | 2026-02-23 |
+| Tape-out | 2026-09-21 |
+| Silicon | 2027-05-18 |
+| Groundbreak | 2028-04-17 |
+| Year close | 2026-12-28 |
 
-## Timeline markers mock
-
-| Marker | Date | CSS |
-|--------|------|-----|
-| Today | 2026-06-07 | `axgantt-marker` |
-| Design freeze | 2026-02-23 | `axgantt-marker` |
-| Tape-out | 2026-09-21 | `axgantt-marker` |
-
-## Scale config mock
+## scaleJson mock
 
 ```json
 {
@@ -108,37 +102,19 @@ roadmapRevisedAt: "2026-06-07T00:00:00.000Z"
 }
 ```
 
-## Columns config mock
+## columnsJson mock
 
 ```json
 {
   "columns": [
-    { "name": "text",   "label": "Project", "tree": true, "width": 280, "resize": true },
-    { "name": "owner",  "label": "Owner",   "width": 130, "align": "left" },
-    { "name": "status", "label": "Status",  "width": 100, "align": "center" }
+    { "name": "text", "label": "Project", "tree": true, "width": 300, "resize": true }
   ]
 }
 ```
 
-## Cách dùng mock data trong code
-
-`AxGanttInner` dùng mock khi `props.useMockData = true`:
-
-```typescript
-const headerProps = useMemo(() => {
-  const mock = props.useMockData ? getAxGanttRoadmapMock() : null;
-  return {
-    roadmapNo: readDynamicString(props.roadmapNo) ?? mock?.roadmapNo,
-    ...
-  };
-}, [props.useMockData, ...]);
-```
-
-`useJsonDataSync` tương tự — nếu mock thì dùng mock JSON strings thay vì expressions.
-
-## Mở rộng mock data
+## Mở rộng mock
 
 1. Edit `src/mock/axgantt-roadmap.mock.ts`
-2. Thêm tasks vào `taskListJson` — giữ đúng thứ tự parent trước child
-3. Thêm links, markers nếu cần
-4. Chạy `pnpm run dev` và refresh Mendix page
+2. Export: `mock/axgantt-roadmap.mock.full.json`
+3. Parent trước child trong `tasks[]`
+4. `pnpm run dev` + refresh page

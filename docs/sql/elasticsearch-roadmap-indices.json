@@ -1,0 +1,92 @@
+-- =============================================================================
+-- Elasticsearch index templates — AxGantt roadmap analytics
+-- Companion: docs/11-microflow-nanoflow-elasticsearch.md
+-- Apply via: PUT _index_template/roadmap-tasks
+-- =============================================================================
+
+PUT _index_template/roadmap-tasks
+{
+  "index_patterns": ["roadmap-tasks-*"],
+  "template": {
+    "settings": {
+      "number_of_shards": 2,
+      "number_of_replicas": 1,
+      "refresh_interval": "5s"
+    },
+    "mappings": {
+      "properties": {
+        "roadmapId":        { "type": "keyword" },
+        "documentNo":       { "type": "keyword" },
+        "revision":         { "type": "keyword" },
+        "taskKey":          { "type": "keyword" },
+        "taskName":         {
+          "type": "text",
+          "fields": { "keyword": { "type": "keyword", "ignore_above": 256 } }
+        },
+        "parentKey":        { "type": "keyword" },
+        "programKey":       { "type": "keyword" },
+        "programName":      {
+          "type": "text",
+          "fields": { "keyword": { "type": "keyword", "ignore_above": 256 } }
+        },
+        "hierarchyLevel": { "type": "keyword" },
+        "taskType":         { "type": "keyword" },
+        "status":           { "type": "keyword" },
+        "owner":            { "type": "keyword" },
+        "startDate":        { "type": "date", "format": "yyyy-MM-dd||strict_date_optional_time" },
+        "endDate":          { "type": "date", "format": "yyyy-MM-dd||strict_date_optional_time" },
+        "modifiedAt":       { "type": "date" },
+        "progress":         { "type": "float" },
+        "durationDays":     { "type": "integer" },
+        "isoWeekStart":     { "type": "integer" },
+        "isoWeekEnd":       { "type": "integer" },
+        "anchorYear":       { "type": "integer" },
+        "barColor":         { "type": "keyword" },
+        "isMilestone":      { "type": "boolean" },
+        "modifiedBy":       { "type": "keyword" }
+      }
+    }
+  }
+}
+
+PUT _index_template/roadmap-rollups
+{
+  "index_patterns": ["roadmap-rollups-*"],
+  "template": {
+    "mappings": {
+      "properties": {
+        "roadmapId":       { "type": "keyword" },
+        "programKey":      { "type": "keyword" },
+        "programName":     { "type": "keyword" },
+        "year":            { "type": "integer" },
+        "taskCount":       { "type": "integer" },
+        "avgProgress":     { "type": "float" },
+        "milestoneCount":  { "type": "integer" },
+        "overdueCount":    { "type": "integer" },
+        "updatedAt":       { "type": "date" }
+      }
+    }
+  }
+}
+
+PUT _index_template/roadmap-changes
+{
+  "index_patterns": ["roadmap-changes-*"],
+  "template": {
+    "mappings": {
+      "properties": {
+        "eventId":     { "type": "keyword" },
+        "roadmapId":   { "type": "keyword" },
+        "taskKey":     { "type": "keyword" },
+        "changeType":  { "type": "keyword" },
+        "payloadJson": { "type": "text", "index": false },
+        "occurredAt":  { "type": "date" },
+        "userName":    { "type": "keyword" }
+      }
+    }
+  }
+}
+
+-- Sample document (roadmap-tasks-prod)
+-- POST roadmap-tasks-prod/_doc/1234567890_PROD-ALPHA
+-- { "roadmapId":"1234567890", "taskKey":"PROD-ALPHA", ... }

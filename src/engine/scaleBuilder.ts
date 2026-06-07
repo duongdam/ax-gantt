@@ -4,7 +4,7 @@ import type { ScalePayload, WeekLabelFormat } from "../stores/types";
 import {
     EXECUTIVE_TIMELINE_ANCHOR_YEAR,
     formatExecutiveWeekLabel,
-    getWeekIndexFromDate,
+    getIsoWeekNumber,
     startOfWeek
 } from "./executiveTimeline";
 
@@ -22,11 +22,10 @@ export function getWeekCountForYear(year: number): number {
 }
 
 function formatWeekLabel(date: Date, format: WeekLabelFormat, anchorYear: number): string {
-    const index = getWeekIndexFromDate(date, anchorYear);
     if (format === "T##") {
         return formatExecutiveWeekLabel(date, anchorYear);
     }
-    return `W${String(index).padStart(2, "0")}`;
+    return `${String(getIsoWeekNumber(date)).padStart(2, "0")}`;
 }
 
 function formatYearLabel(date: Date): string {

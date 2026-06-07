@@ -15,6 +15,9 @@ Tài liệu chi tiết cho Mendix pluggable widget **Dhl Gantt Chart** (dhtmlx G
 | 7 | [Events & Actions](./07-events-and-actions.md) | Mendix actions, context objects, edit flow |
 | 8 | [Development](./08-development.md) | Setup, build, test, mở rộng widget |
 | 9 | [Troubleshooting](./09-troubleshooting.md) | Lỗi thường gặp, error codes |
+| 10 | [Oracle Scale Domain](./10-oracle-scale-domain.md) | DB Oracle + Mendix cho scaleJson |
+| 11 | [Microflow & Elasticsearch](./11-microflow-nanoflow-elasticsearch.md) | MF/NF catalog, ES analytics dashboard |
+| 12 | [JSON Reference](./12-json-reference.md) | **Toàn bộ field JSON — chức năng & nhiệm vụ** |
 
 ## Tài liệu kỹ thuật (Spec Kit)
 

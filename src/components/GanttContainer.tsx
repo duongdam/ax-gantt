@@ -210,7 +210,7 @@ export const GanttContainer = observer(
             if (!engine?.isInitialized()) {
                 return;
             }
-            if (autoFit || fitTasks) {
+            if ((autoFit || fitTasks) && !(ganttStartDate && ganttEndDate)) {
                 engine.fitTasks();
             }
             if (initialScroll) {

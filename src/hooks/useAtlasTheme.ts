@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type { ThemeConfig } from "antd";
-import { theme } from "antd";
+import defaultAlgorithm from "antd/es/theme/themes/default";
 
 /**
  * Reads Mendix Atlas UI CSS custom properties from :root and maps them
@@ -34,7 +34,7 @@ export function useAtlasTheme(): ThemeConfig {
         const fontSizeRaw = readCssVar("--font-size-default", "14px");
 
         return {
-            algorithm: theme.defaultAlgorithm,
+            algorithm: defaultAlgorithm,
             token: {
                 colorPrimary,
                 colorSuccess,
