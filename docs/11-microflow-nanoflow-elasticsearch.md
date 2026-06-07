@@ -2,6 +2,9 @@
 
 Hướng dẫn thiết kế **microflow / nanoflow** cho trang **AxGantt** (biểu đồ Gantt phía trên) và **Elasticsearch** cho lớp đọc / biểu đồ tổng hợp phía dưới.
 
+> **Ghép nhanh tại công ty (offline):** [`15-ke-hoach-implement-cong-ty.md`](15-ke-hoach-implement-cong-ty.md) — kế hoạch P0–P4 từng giờ.  
+> Chi tiết domain/MF: [`14-mendix-tich-hop-nhanh.md`](14-mendix-tich-hop-nhanh.md)
+
 **Liên quan:** [05-mendix-integration](./05-mendix-integration.md) · [07-events-and-actions](./07-events-and-actions.md) · [10-oracle-scale-domain](./10-oracle-scale-domain.md)
 
 ---

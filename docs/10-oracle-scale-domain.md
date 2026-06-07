@@ -2,7 +2,32 @@
 
 Thiết kế lưu trữ **scaleJson** (và timeline bounds liên quan) trên Oracle, map vào Mendix domain model, aggregate ra JSON cho widget AxGantt.
 
+> **DBA mới:** đọc trước [`13-oracle-huong-dan-dba.md`](13-oracle-huong-dan-dba.md) — quan hệ bảng, cài đặt Oracle, query kiểm tra, lỗi DBeaver.
+
 **DDL tham chiếu:** [`docs/sql/oracle-axgantt-scale.sql`](sql/oracle-axgantt-scale.sql)
+
+**Chạy trên Oracle 19c (DBeaver Alt+X — không Ctrl+Enter từng dòng):**
+
+| # | File | Mô tả |
+|---|------|--------|
+| 1 | `oracle-axgantt-scale.sql` | **Idempotent** — drop + tạo bảng/sequence (chạy lại được) |
+| 2 | `oracle-axgantt-scale-seed.sql` | **Idempotent** — xóa mock cũ + insert (chỉ block PL/SQL) |
+| 3 | `oracle-axgantt-scale-view.sql` | Optional — view JSON |
+| 4 | `oracle-axgantt-scale-seed-verify.sql` | Optional — **một SELECT** kiểm tra seed (JOIN) |
+| 5 | `oracle-axgantt-scale-seed-verify-json.sql` | Optional — **một SELECT** kiểm tra view JSON |
+
+`oracle-axgantt-scale-drop.sql` — chỉ cần khi muốn xóa mà không tạo lại (file 1 đã drop trước khi create).
+
+**Lỗi thường gặp:**
+
+| ORA | Nguyên nhân | Cách xử lý |
+|-----|-------------|------------|
+| 00933 | DBeaver + `;` trên DDL/SELECT rời | DDL/seed: block PL/SQL; verify: **một SELECT/file**, không `;` cuối |
+| 00955 | Object đã tồn tại | Chạy lại file 1 (đã gồm drop) |
+| 01408 | Index trùng UNIQUE | Đã bỏ `ix_sim_scale_row_scale` (UNIQUE đủ) |
+| 06550 / PLS-00103 `SELECT` | SELECT sau `END;` bị DBeaver gộp vào block PL/SQL | Chạy `seed-verify.sql` riêng; không gộp SELECT vào `seed.sql` |
+
+Giá trị `W##` trong DDL/seed: `'W' \|\| CHR(35) \|\| CHR(35)` — không có ký tự `#` trong file SQL.
 
 ---
 
@@ -47,27 +72,27 @@ erDiagram
 
 | Bảng | Ý nghĩa | Mendix entity |
 |------|---------|---------------|
-| `pm_roadmap` | Roadmap + timeline bounds | `Roadmap` |
-| `pm_scale` | scaleJson root (anchorYear, weekFmt) | `RoadmapScaleConfig` |
-| `pm_scale_row` | scaleJson.scales[] (hàng năm/tuần) | `RoadmapScaleUnit` |
-| `pm_scale_tpl` | Preset scale (admin) | `ScaleTemplate` |
-| `pm_scale_tpl_row` | Dòng preset | `ScaleTemplateUnit` |
-| `v_pm_scale_json` | View aggregate JSON | — |
+| `sim_roadmap` | Roadmap + timeline bounds | `Roadmap` |
+| `sim_scale` | scaleJson root (anchorYear, weekFmt) | `RoadmapScaleConfig` (`display_name`) |
+| `sim_scale_row` | scaleJson.scales[] (hàng năm/tuần) | `RoadmapScaleUnit` |
+| `sim_scale_tpl` | Preset scale (admin) | `ScaleTemplate` |
+| `sim_scale_tpl_row` | Dòng preset | `ScaleTemplateUnit` |
+| `v_sim_scale_json` | View aggregate JSON | — |
 
-Prefix `pm_` = PM Roadmap module. Cột cũng rút gọn: `doc_no`, `gantt_start`, `anchor_year`, `week_fmt`, `sort_no`, `step_val`, `fmt_key`.
+Prefix **`sim_`** = module **`Simulator`** (DDL lab). Cột rút gọn: `doc_no`, `gantt_start`, `anchor_year`, `week_fmt`, `sort_no`, `step_val`, `fmt_key`.
 
 ## 3. Map JSON → bảng
 
 | scaleJson field | Mendix entity | Oracle (bảng.cột) | Ghi chú |
 |-----------------|---------------|-------------------|---------|
-| *(widget prop)* | `Roadmap.GanttStartDate` | `pm_roadmap.gantt_start` | Không nằm trong scaleJson |
-| *(widget prop)* | `Roadmap.GanttEndDate` | `pm_roadmap.gantt_end` | Clip cột tuần hiển thị |
-| `anchorYear` | `RoadmapScaleConfig.AnchorYear` | `pm_scale.anchor_year` | Default 2026; 2026 = 53 ISO weeks |
-| `weekLabelFormat` | `RoadmapScaleConfig.WeekLabelFormat` | `pm_scale.week_fmt` | Enum `W##` \| `T##` |
-| `scales[n].unit` | `RoadmapScaleUnit.Unit` | `pm_scale_row.unit` | `year` \| `month` \| `week` \| `day` |
-| `scales[n].step` | `RoadmapScaleUnit.Step` | `pm_scale_row.step_val` | Default 1 |
-| `scales[n].format` | `RoadmapScaleUnit.FormatKey` | `pm_scale_row.fmt_key` | `year`, `W##`, … |
-| Thứ tự mảng | `RoadmapScaleUnit.SortOrder` | `pm_scale_row.sort_no` | **0 = hàng trên** (năm), 1 = tuần |
+| *(widget prop)* | `Roadmap.GanttStartDate` | `sim_roadmap.gantt_start` | Không nằm trong scaleJson |
+| *(widget prop)* | `Roadmap.GanttEndDate` | `sim_roadmap.gantt_end` | Clip cột tuần hiển thị |
+| `anchorYear` | `RoadmapScaleConfig.AnchorYear` | `sim_scale.anchor_year` | Default 2026; 2026 = 53 ISO weeks |
+| `weekLabelFormat` | `RoadmapScaleConfig.WeekLabelFormat` | `sim_scale.week_fmt` | Enum `W##` \| `T##` |
+| `scales[n].unit` | `RoadmapScaleUnit.Unit` | `sim_scale_row.unit` | `year` \| `month` \| `week` \| `day` |
+| `scales[n].step` | `RoadmapScaleUnit.Step` | `sim_scale_row.step_val` | Default 1 |
+| `scales[n].format` | `RoadmapScaleUnit.FormatKey` | `sim_scale_row.fmt_key` | `year`, `W##`, … |
+| Thứ tự mảng | `RoadmapScaleUnit.SortOrder` | `sim_scale_row.sort_no` | **0 = hàng trên** (năm), 1 = tuần |
 
 **Output JSON mục tiêu** (mock):
 
@@ -88,7 +113,7 @@ Widget hiển thị hàng tuần là **Tuần 01, Tuần 02…** (format `W##` t
 
 ## 4. Mendix domain model (Studio Pro)
 
-**Module:** `PMRoadmap`
+**Module:** **`Simulator`** (tài liệu cũ ghi `PMRoadmap` — cùng ý, đổi namespace khi làm tại công ty)
 
 ### 4.1 Enumerations
 
@@ -176,21 +201,21 @@ Microflow **ApplyTemplateToRoadmap**: copy rows từ template sang `RoadmapScale
 
 ## 5. Mendix deploy vs DDL tham chiếu
 
-Mendix tự sinh bảng dạng `pmroadmap$roadmap`, `pmroadmap$roadmapscaleconfig`, … File [`oracle-axgantt-scale.sql`](sql/oracle-axgantt-scale.sql) dùng tên **ngắn** (`pm_*`) cho DBA/review — map logic entity giữ nguyên.
+Mendix tự sinh bảng dạng `simulator$roadmap`, `simulator$roadmapscaleconfig`, … File [`oracle-axgantt-scale.sql`](sql/oracle-axgantt-scale.sql) dùng tên **ngắn** (`sim_*`) cho DBA/review — map logic entity giữ nguyên.
 
-| Mendix entity | Mendix table (deploy) | DDL tham chiếu |
-|---------------|----------------------|----------------|
-| `Roadmap` | `pmroadmap$roadmap` | `pm_roadmap` |
-| `RoadmapScaleConfig` | `pmroadmap$roadmapscaleconfig` | `pm_scale` |
-| `RoadmapScaleUnit` | `pmroadmap$roadmapscaleunit` | `pm_scale_row` |
-| `ScaleTemplate` | `pmroadmap$scaletemplate` | `pm_scale_tpl` |
-| `ScaleTemplateUnit` | `pmroadmap$scaletemplateunit` | `pm_scale_tpl_row` |
+| Mendix entity | Mendix table (deploy **`Simulator`**) | DDL tham chiếu |
+|---------------|--------------------------------------|----------------|
+| `Roadmap` | `simulator$roadmap` | `sim_roadmap` |
+| `RoadmapScaleConfig` | `simulator$roadmapscaleconfig` | `sim_scale` |
+| `RoadmapScaleUnit` | `simulator$roadmapscaleunit` | `sim_scale_row` |
+| `ScaleTemplate` | `simulator$scaletemplate` | `sim_scale_tpl` |
+| `ScaleTemplateUnit` | `simulator$scaletemplateunit` | `sim_scale_tpl_row` |
 
 Index khuyến nghị trên Mendix table:
 
 ```sql
 CREATE UNIQUE INDEX uk_scale_row_order
-    ON pmroadmap$roadmapscaleunit (pmroadmap$roadmapscaleconfigid, sortorder);
+    ON simulator$roadmapscaleunit (simulator$roadmapscaleconfigid, sortorder);
 ```
 
 ---
@@ -279,7 +304,7 @@ SQL seed đầy đủ (ID Mendix cố định): [`oracle-axgantt-scale-seed.sql`
 
 ```sql
 SELECT roadmap_id, doc_no, scale_json
-FROM v_pm_scale_json
+FROM v_sim_scale_json
 WHERE doc_no = 'Msoc251030-155';
 ```
 

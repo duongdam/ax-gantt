@@ -80,7 +80,7 @@ File [`mock/axgantt-roadmap.mock.full.json`](../mock/axgantt-roadmap.mock.full.j
 
 Khi set cả hai, widget tắt `fit_tasks` tự thu hẹp theo task — giữ đủ band năm/tuần theo range đã chọn.
 
-**Oracle / Mendix:** lưu trên entity `Roadmap` (`pm_roadmap.gantt_start`, `gantt_end`).
+**Oracle / Mendix:** lưu trên entity `Roadmap` (`sim_roadmap.gantt_start`, `gantt_end`).
 
 ---
 
@@ -272,7 +272,7 @@ Rỗng hoặc `{}` → default: **năm + tuần W##** (`anchorYear: 2026`).
 
 **Lưu ý:** Khi có `scaleJson`, widget **không** dùng zoom extension mặc định (hour/day) — tránh ghi đè executive timeline.
 
-**Oracle:** `pm_scale` + `pm_scale_row` — xem [10-oracle-scale-domain.md](./10-oracle-scale-domain.md).
+**Oracle:** `sim_scale` + `sim_scale_row` — xem [10-oracle-scale-domain.md](./10-oracle-scale-domain.md).
 
 ---
 
@@ -376,7 +376,7 @@ Rỗng → default: một cột `Project` (tree, width 300).
 |-------------|-----------------|----------------------|-----------------|
 | `tasks[]` | `taskListJson` | `RoadmapTask` | Sau save/delete/move MF |
 | `links[]` | `taskListJson` | `RoadmapTaskLink` | Cùng taskListJson |
-| `scaleJson` | `scaleJson` | `pm_scale`, `pm_scale_row` | Đổi cấu hình timeline |
+| `scaleJson` | `scaleJson` | `sim_scale`, `sim_scale_row` | Đổi cấu hình timeline |
 | `columnsJson` | `columnsJson` | Config / constant MF | Đổi layout grid |
 | `markerJson` | `markerJson` | `RoadmapMarker` | Đổi mốc |
 | Timeline clip | `ganttStartDate`, `ganttEndDate` | `Roadmap` | Đổi range năm |

@@ -2,6 +2,8 @@
 
 Tài liệu chi tiết cho Mendix pluggable widget **Dhl Gantt Chart** (dhtmlx Gantt 9).
 
+> **Đi làm / không có AI:** bắt đầu tại **[15 — Kế hoạch implement tại công ty](./15-ke-hoach-implement-cong-ty.md)** → clone repo cá nhân → làm theo P0–P4.
+
 ## Mục lục
 
 | # | Tài liệu | Nội dung |
@@ -18,6 +20,9 @@ Tài liệu chi tiết cho Mendix pluggable widget **Dhl Gantt Chart** (dhtmlx G
 | 10 | [Oracle Scale Domain](./10-oracle-scale-domain.md) | DB Oracle + Mendix cho scaleJson |
 | 11 | [Microflow & Elasticsearch](./11-microflow-nanoflow-elasticsearch.md) | MF/NF catalog, ES analytics dashboard |
 | 12 | [JSON Reference](./12-json-reference.md) | **Toàn bộ field JSON — chức năng & nhiệm vụ** |
+| 13 | [Oracle — Hướng dẫn DBA](./13-oracle-huong-dan-dba.md) | **Quan hệ bảng, cài đặt, query — cho DBA mới** |
+| 14 | [Mendix — Ghép nhanh](./14-mendix-tich-hop-nhanh.md) | **Domain, microflow, ES — playbook 1–2 ngày** |
+| 15 | [**Kế hoạch implement tại công ty**](./15-ke-hoach-implement-cong-ty.md) | **Offline playbook P0–P4 — START HERE** |
 
 ## Tài liệu kỹ thuật (Spec Kit)
 
@@ -36,4 +41,4 @@ pnpm run build                  # Production .mpk
 pnpm run test:unit              # Unit tests
 ```
 
-Widget package: `dist/1.0.0/mendix.DhlGanttChart.mpk`
+Widget package: `dist/1.0.0/mendix.AxGantt.mpk`

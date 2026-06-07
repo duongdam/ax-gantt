@@ -1,0 +1,17 @@
+-- =============================================================================
+-- AxGantt - Full install Oracle 19c + DBeaver (Mendix module Simulator)
+--
+-- Lab DDL uses sim_* tables (maps to simulator$* after Mendix deploy)
+--
+-- Execute SQL Script (Alt+X) on each file, in order:
+--
+--   1. oracle-axgantt-scale.sql       idempotent (drop + create) - REQUIRED
+--   2. oracle-axgantt-scale-seed.sql       idempotent seed (PL/SQL block only)
+--   3. oracle-axgantt-scale-view.sql       optional JSON view
+--   4. oracle-axgantt-scale-seed-verify.sql      one SELECT - seed rows
+--   5. oracle-axgantt-scale-seed-verify-json.sql one SELECT - scaleJson view
+--
+-- oracle-axgantt-scale-drop.sql is optional (scale.sql already drops first)
+--
+-- Do NOT use Ctrl+Enter on individual lines inside PL/SQL blocks.
+-- =============================================================================
