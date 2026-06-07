@@ -1,4 +1,4 @@
-import type { GanttLink, GanttNormalizedModel, GanttTask } from "../store/types";
+import type { GanttLink, GanttNormalizedModel, GanttTask } from "../stores/types";
 import { formatDhtmlxDate } from "../utils/dates";
 
 export interface DhtmlxTask {

@@ -17,23 +17,23 @@
   },
   "packagePath": "mendix",
   "scripts": {
-    "start": "pluggable-widgets-tools start:server",
-    "dev": "pluggable-widgets-tools start:web",
-    "build": "pluggable-widgets-tools build:web",
-    "lint": "pluggable-widgets-tools lint",
-    "lint:fix": "pluggable-widgets-tools lint:fix",
-    "test": "pluggable-widgets-tools test:unit:web",
-    "test:unit": "pluggable-widgets-tools test:unit:web",
+    "start": "CI=true pluggable-widgets-tools start:server",
+    "dev": "CI=true pluggable-widgets-tools start:web",
+    "build": "CI=true pluggable-widgets-tools build:web",
+    "lint": "CI=true pluggable-widgets-tools lint",
+    "lint:fix": "CI=true pluggable-widgets-tools lint:fix",
+    "test": "CI=true pluggable-widgets-tools test:unit:web",
+    "test:unit": "CI=true pluggable-widgets-tools test:unit:web",
     "prerelease": "npm run lint",
-    "release": "pluggable-widgets-tools release:web"
+    "release": "CI=true pluggable-widgets-tools release:web"
   },
   "devDependencies": {
-    "@mendix/pluggable-widgets-tools": "^11.8.1",
+    "@mendix/pluggable-widgets-tools": "11.8.1",
     "@types/big.js": "^6.2.2",
     "@types/jest": "^29.5.14",
     "@types/node": "^25.9.1",
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
+    "@types/react": "18.2.79",
+    "@types/react-dom": "18.2.25",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "mendix": "11.10.0"
@@ -44,5 +44,16 @@
     "dhtmlx-gantt": "^9.1.4",
     "mobx": "^6.16.0",
     "mobx-react-lite": "^4.1.1"
+  },
+  "pnpm": {
+    "overrides": {
+      "react": "18.2.0",
+      "react-dom": "18.2.0"
+    },
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "core-js",
+      "unrs-resolver"
+    ]
   }
 }

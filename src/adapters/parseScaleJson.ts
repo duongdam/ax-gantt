@@ -1,5 +1,5 @@
-import type { JsonParseResult, ScalePayload } from "../store/types";
-import { DEFAULT_SCALE_PAYLOAD } from "../store/types";
+import type { JsonParseResult, ScalePayload } from "../stores/types";
+import { DEFAULT_SCALE_PAYLOAD } from "../stores/types";
 
 export function parseScaleJson(input: string | null | undefined): JsonParseResult<ScalePayload> {
     const errors: string[] = [];

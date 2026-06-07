@@ -1,155 +1,144 @@
 # 4. Mock Data
 
-Mock data phục vụ phát triển và demo không cần Mendix domain model.
+Mock data phục vụ phát triển và demo mà không cần Mendix backend.
 
-## Loader
+## Bật mock mode
 
-File: `src/mock/datasources/index.ts`
+Widget property: `useMockData = true`
+
+Khi bật, widget bỏ qua tất cả JSON expressions và load `axgantt-roadmap.mock.ts` thay thế.
+
+## File mock
+
+File: `src/mock/axgantt-roadmap.mock.ts`
+
+Export hàm `getAxGanttRoadmapMock()` trả về toàn bộ mock data:
 
 ```typescript
-loadMockDatasource({
-  delayMs: 800,      // simulated network delay
-  shouldFail: false, // force L001 error
-  scenario: "default" // default | empty | performance
-})
+export function getAxGanttRoadmapMock(): AxGanttRoadmapMock {
+  return {
+    taskListJson: string,       // JSON tasks + links
+    scaleJson: string,          // JSON scale config
+    columnsJson: string,        // JSON columns
+    markerJson: string,         // JSON markers
+    roadmapNo: string,          // "Msoc251030-155"
+    roadmapRevision: string,    // "3"
+    roadmapRevisedBy: string,   // "mxadmin"
+    roadmapRevisedAt: string,   // ISO datetime
+  };
+}
 ```
 
-Widget truyền options qua `mockOptions` trong `DhlGanttChart.tsx` (`delayMs: 600` mặc định trong code).
+## Cấu trúc hierarchy (5 levels)
 
-## Scenarios
+```
+Portfolio (type=project, level=portfolio)
+└── Program (type=project, level=program)
+    └── Phase (type=project, level=phase)
+        └── Product (type=task, level=product)
+            └── Task / Milestone (type=task|milestone, level=task)
+```
 
-| Scenario | File | Nội dung |
-|----------|------|----------|
-| `default` | `scenarios/multiSite.ts` | Executive portfolio — tasks, links, resources, assignments |
-| `empty` | `scenarios/empty.ts` | Model rỗng — test empty state |
-| `performance` | `scenarios/performance.ts` | 500 tasks generated — stress test |
-
-## Executive portfolio (default)
-
-### Thống kê
+## Thống kê
 
 | Metric | Giá trị |
 |--------|---------|
-| Companies | 10 (CO-A … CO-J) |
-| Tasks | ~42 + 2 milestones |
-| Hierarchy | 3 levels: Company → Program → Product |
-| Language | English labels |
-| Anchor year | 2026 |
-| Source file | `src/mock/datasources/tasks.mock.ts` |
+| Levels | 5 (portfolio → program → phase → product → task) |
+| Total tasks | ~17 |
+| Programs | 2 (Advanced Logic, Memory Technology) |
+| Phases | 3 (Phase I + Phase II + Phase I-Mem) |
+| Products | 4 (Product Alpha, Beta, Gamma, DRAM Gen-X) |
+| Milestones | 4 (Design freeze, RTL complete, Tape-out, ...) |
+| Links | 2 (FS dependencies) |
+| Timeline markers | 3 (Today, Design freeze, Tape-out) |
+| Anchor year | 2026 (53 ISO weeks) |
 
-### Cấu trúc hierarchy
-
-```
-Company (type=project, level=company)
-  └── Program (type=project, level=program)
-        └── Product (type=task, level=product)
-Milestone (type=milestone, level=milestone)
-```
-
-### Danh sách companies
-
-| ID | Label | Site | Programs |
-|----|-------|------|----------|
-| CO-A | Company A | HQ-A | Samsung Mobile, Honda Automotive |
-| CO-B | Company B | HQ-B | EV Battery & Energy |
-| CO-C | Company C — Display | HQ-C | Next-Gen OLED Panel Line |
-| CO-D | Company D — Semiconductor | HS-01 | Fab 3nm Expansion |
-| CO-E | Company E — Cloud & AI | HQ-E | Enterprise AI Platform |
-| CO-F | Company F — Logistics | VN-02 | Smart Warehouse System |
-| CO-G | Company G — Healthcare | KR-03 | Medical Imaging Devices |
-| CO-H | Company H — Renewable Energy | HQ-H | Wind & Solar Power |
-| CO-I | Company I — Retail Digital | HQ-I | Retail Digital Transformation |
-| CO-J | Company J — Aerospace | HQ-J | Aviation Components |
-
-### Ví dụ Company A
-
-```
-Company A
-├── Samsung Mobile Device Development
-│   ├── Samsung Z Fold        (Jun–Dec, 35%)
-│   └── Samsung S26+          (Feb–Sep, 62%)
-└── Honda Automotive Development
-    ├── Honda CRV             (Mar–Nov, 28%)
-    └── Honda Civic Hybrid    (Jan–Aug, 55%)
-```
-
-### Custom fields trên task
-
-Mock tasks dùng `custom` object cho executive presentation:
+## Cấu trúc mock task
 
 ```typescript
-custom: {
-  level: "company" | "program" | "product" | "milestone",
-  periodLabel: "T1–T52" | "T6–T52" | "T28",  // week range label
-  status: "planned" | "in_progress" | "completed",
-  owner?: "Mobile PM"  // product level only
+{
+  "id":       "PROD-ALPHA",
+  "text":     "Product Alpha",
+  "start":    "2026-02-02",
+  "end":      "2026-05-18",
+  "parent":   "PH-AL-1",
+  "type":     "task",
+  "progress": 0.35,
+  "color":    "#4F46E5",
+  "level":    "product",
+  "owner":    "nguyen.van.a",
+  "status":   "In Progress"
 }
 ```
 
-`periodLabel` được tính tự động qua `formatExecutivePeriodRange()` từ start/end dates.
+## PM Roadmap Header mock
 
-### Milestones
-
-| ID | Text | Parent | Week |
-|----|------|--------|------|
-| M-GATE | Gate review portfolio Q3 | CO-A | T28 |
-| M-FAB | Fab 3nm readiness review | CO-D | T31 |
-
-## Links mock
-
-File: `src/mock/datasources/links.mock.ts`
-
-Dependencies giữa products/programs across portfolio (FS links). Ví dụ: S26+ → Z Fold, Civic Hybrid → CRV.
-
-## Resources mock
-
-File: `src/mock/datasources/resources.mock.ts`
-
-Resources theo site/department: PMs, engineers, equipment. Dùng cho resource timeline và over-allocation demo.
-
-## Assignments mock
-
-File: `src/mock/datasources/assignments.mock.ts`
-
-Gán resource → product tasks với `value` (allocation units).
-
-## Builder pattern
-
-`tasks.mock.ts` dùng declarative builder:
-
-```typescript
-interface CompanyDef {
-  id: string;
-  text: string;
-  color: string;
-  siteCode: string;
-  progress: number;
-  status: "planned" | "in_progress" | "completed";
-  programs: ProgramDef[];
-}
-
-// PORTFOLIO: CompanyDef[] → buildCompany() → GanttTask[]
-export const MOCK_TASKS = [...PORTFOLIO.flatMap(buildCompany), ...MILESTONES];
+```
+roadmapNo:        "Msoc251030-155"
+roadmapRevision:  "3"
+roadmapRevisedBy: "mxadmin"
+roadmapRevisedAt: "2026-06-07T00:00:00.000Z"
 ```
 
-Thêm company mới: thêm entry vào `PORTFOLIO[]` với programs/products.
+## Dependency links mock
 
-## Performance scenario
+| Link | Source | Target | Type |
+|------|--------|--------|------|
+| LN-1 | TSK-FREEZE (Design freeze) | PROD-BETA (Product Beta) | FS (0) |
+| LN-2 | TSK-RTL (RTL complete) | TSK-TAPEOUT (Tape-out) | FS (0) |
 
-`getPerformanceScenario(500)` tạo 500 flat tasks với ID `PERF-001` … `PERF-500`. **Không** dùng executive hierarchy — mục đích đo render performance và memory.
+## Timeline markers mock
 
-Unit test: `src/mock/datasources/__tests__/performance.spec.ts`
+| Marker | Date | CSS |
+|--------|------|-----|
+| Today | 2026-06-07 | `axgantt-marker` |
+| Design freeze | 2026-02-23 | `axgantt-marker` |
+| Tape-out | 2026-09-21 | `axgantt-marker` |
+
+## Scale config mock
+
+```json
+{
+  "anchorYear": 2026,
+  "weekLabelFormat": "W##",
+  "scales": [
+    { "unit": "year", "step": 1, "format": "year" },
+    { "unit": "week", "step": 1, "format": "W##" }
+  ]
+}
+```
+
+## Columns config mock
+
+```json
+{
+  "columns": [
+    { "name": "text",   "label": "Project", "tree": true, "width": 280, "resize": true },
+    { "name": "owner",  "label": "Owner",   "width": 130, "align": "left" },
+    { "name": "status", "label": "Status",  "width": 100, "align": "center" }
+  ]
+}
+```
+
+## Cách dùng mock data trong code
+
+`AxGanttInner` dùng mock khi `props.useMockData = true`:
+
+```typescript
+const headerProps = useMemo(() => {
+  const mock = props.useMockData ? getAxGanttRoadmapMock() : null;
+  return {
+    roadmapNo: readDynamicString(props.roadmapNo) ?? mock?.roadmapNo,
+    ...
+  };
+}, [props.useMockData, ...]);
+```
+
+`useJsonDataSync` tương tự — nếu mock thì dùng mock JSON strings thay vì expressions.
 
 ## Mở rộng mock data
 
-1. Thêm `CompanyDef` vào `PORTFOLIO` trong `tasks.mock.ts`
-2. Cập nhật `links.mock.ts` nếu cần dependencies mới
-3. Cập nhật `resources.mock.ts` / `assignments.mock.ts` cho resource view
-4. Chạy `pnpm run test:unit` và `pnpm run build`
-5. Sync `.mpk` vào Mendix project
-
-## Week buckets từ mock
-
-`getWeekBuckets(model)` scan tất cả task dates, tạo week tabs T1…Tn chỉ cho weeks có ít nhất 1 task overlap. Filter bar auto-select week đầu tiên on load.
-
-Product segments trong week: tasks có `custom.level === "product"` hoặc `type === "milestone"` overlap week đó.
+1. Edit `src/mock/axgantt-roadmap.mock.ts`
+2. Thêm tasks vào `taskListJson` — giữ đúng thứ tự parent trước child
+3. Thêm links, markers nếu cần
+4. Chạy `pnpm run dev` và refresh Mendix page

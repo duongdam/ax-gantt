@@ -1,7 +1,7 @@
 import type { GanttStatic } from "dhtmlx-gantt";
 
 import { scaleConfigs } from "./scaleConfigs";
-import type { GanttScale } from "../store/types";
+import type { GanttScale } from "../stores/types";
 
 const zoomLevelOrder: GanttScale[] = ["hour", "day", "week", "month", "quarter", "year"];
 

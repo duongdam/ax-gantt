@@ -4,9 +4,9 @@ import { buildTaskChangeContext, buildTaskEventContext, type AxGanttChangeType }
 import { ganttTaskToModel } from "../adapters/mapTasksFromGantt";
 import type { FeatureRegistry } from "./FeatureRegistry";
 import type { GanttEngine } from "./GanttEngine";
-import type { GanttStore } from "../store/GanttStore";
-import type { JsonDataStore } from "../store/JsonDataStore";
-import type { GanttTask } from "../store/types";
+import type { GanttStore } from "../stores/GanttStore";
+import type { JsonDataStore } from "../stores/JsonDataStore";
+import type { GanttTask } from "../stores/types";
 
 export interface EventBridgeActions {
     onTaskDbClickAction?: () => void;

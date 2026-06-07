@@ -1,5 +1,5 @@
-import type { ColumnDef, ColumnsPayload, JsonParseResult } from "../store/types";
-import { DEFAULT_COLUMNS_PAYLOAD } from "../store/types";
+import type { ColumnDef, ColumnsPayload, JsonParseResult } from "../stores/types";
+import { DEFAULT_COLUMNS_PAYLOAD } from "../stores/types";
 
 function normalizeColumn(raw: Partial<ColumnDef>): ColumnDef | null {
     if (!raw.name || !raw.label) {

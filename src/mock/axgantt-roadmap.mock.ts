@@ -1,10 +1,12 @@
-import type { TaskListPayload } from "../store/types";
+import type { TaskListPayload } from "../stores/types";
 
 export interface AxGanttMockBundle {
     taskListJson: string;
     scaleJson: string;
     columnsJson: string;
     markerJson: string;
+    ganttStartDate: string;
+    ganttEndDate: string;
     roadmapNo: string;
     roadmapRevision: string;
     roadmapRevisedBy: string;
@@ -16,16 +18,90 @@ export const MOCK_TASK_LIST: TaskListPayload = {
     tasks: [
         {
             id: "PF-1",
-            text: "Samsung DS PM Roadmap 2026",
-            start: "2026-01-01",
-            end: "2026-12-31",
+            text: "Samsung DS PM Roadmap 2024–2028",
+            start: "2024-01-01",
+            end: "2028-12-31",
             type: "project",
             open: true,
             level: "portfolio"
         },
+
+        // ── 2024 ──────────────────────────────────────────────────────────────
+        {
+            id: "PRG-2024",
+            text: "2024 · Foundation",
+            parent: "PF-1",
+            start: "2024-01-01",
+            end: "2024-12-31",
+            type: "project",
+            open: true,
+            level: "program"
+        },
+        {
+            id: "PH-2024-1",
+            text: "Phase I · 2024",
+            parent: "PRG-2024",
+            start: "2024-01-08",
+            end: "2024-06-30",
+            type: "project",
+            open: true,
+            level: "phase"
+        },
+        {
+            id: "PROD-2024-FE",
+            text: "Legacy stack refresh",
+            parent: "PH-2024-1",
+            start: "2024-02-05",
+            end: "2024-05-17",
+            type: "task",
+            progress: 1,
+            color: "#64748B",
+            level: "product"
+        },
+        {
+            id: "TSK-2024-ARCH",
+            text: "Architecture review",
+            parent: "PROD-2024-FE",
+            start: "2024-04-15",
+            end: "2024-04-15",
+            type: "milestone",
+            level: "task"
+        },
+        {
+            id: "PH-2024-2",
+            text: "Phase II · 2024",
+            parent: "PRG-2024",
+            start: "2024-07-01",
+            end: "2024-12-31",
+            type: "project",
+            open: true,
+            level: "phase"
+        },
+        {
+            id: "PROD-2024-BE",
+            text: "Backend migration",
+            parent: "PH-2024-2",
+            start: "2024-07-08",
+            end: "2024-11-22",
+            type: "task",
+            progress: 1,
+            color: "#475569",
+            level: "product"
+        },
+        {
+            id: "TSK-2024-EOL",
+            text: "Legacy sunset",
+            parent: "PROD-2024-BE",
+            start: "2024-12-16",
+            end: "2024-12-16",
+            type: "milestone",
+            level: "task"
+        },
+
+        // ── 2026 ──────────────────────────────────────────────────────────────
         {
             id: "PRG-AL",
-            text: "Advanced Logic",
+            text: "2026 · Advanced Logic",
             parent: "PF-1",
             start: "2026-01-01",
             end: "2026-12-31",
@@ -115,7 +191,7 @@ export const MOCK_TASK_LIST: TaskListPayload = {
         },
         {
             id: "PRG-MEM",
-            text: "Memory Technology",
+            text: "2026 · Memory Technology",
             parent: "PF-1",
             start: "2026-01-01",
             end: "2026-12-31",
@@ -162,9 +238,144 @@ export const MOCK_TASK_LIST: TaskListPayload = {
             type: "milestone",
             level: "task"
         },
+
+        // ── 2027 ──────────────────────────────────────────────────────────────
+        {
+            id: "PRG-2027",
+            text: "2027 · AI Acceleration",
+            parent: "PF-1",
+            start: "2027-01-01",
+            end: "2027-12-31",
+            type: "project",
+            open: true,
+            level: "program"
+        },
+        {
+            id: "PH-2027-1",
+            text: "Phase I · 2027",
+            parent: "PRG-2027",
+            start: "2027-01-05",
+            end: "2027-08-15",
+            type: "project",
+            open: true,
+            level: "phase"
+        },
+        {
+            id: "PROD-2027-NPU",
+            text: "NPU Gen-2",
+            parent: "PH-2027-1",
+            start: "2027-02-01",
+            end: "2027-07-10",
+            type: "task",
+            progress: 0.18,
+            color: "#0D9488",
+            level: "product"
+        },
+        {
+            id: "TSK-2027-SIL",
+            text: "Silicon bring-up",
+            parent: "PROD-2027-NPU",
+            start: "2027-05-18",
+            end: "2027-05-18",
+            type: "milestone",
+            level: "task"
+        },
+        {
+            id: "PH-2027-2",
+            text: "Phase II · 2027",
+            parent: "PRG-2027",
+            start: "2027-07-06",
+            end: "2027-12-31",
+            type: "project",
+            open: true,
+            level: "phase"
+        },
+        {
+            id: "PROD-2027-ML",
+            text: "ML Platform v3",
+            parent: "PH-2027-2",
+            start: "2027-08-03",
+            end: "2027-12-14",
+            type: "task",
+            progress: 0.08,
+            color: "#14B8A6",
+            level: "product"
+        },
+        {
+            id: "TSK-2027-GA",
+            text: "Platform GA",
+            parent: "PROD-2027-ML",
+            start: "2027-12-07",
+            end: "2027-12-07",
+            type: "milestone",
+            level: "task"
+        },
+
+        // ── 2028 ──────────────────────────────────────────────────────────────
+        {
+            id: "PRG-2028",
+            text: "2028 · Fab Expansion",
+            parent: "PF-1",
+            start: "2028-01-01",
+            end: "2028-12-31",
+            type: "project",
+            open: true,
+            level: "program"
+        },
+        {
+            id: "PH-2028-1",
+            text: "Phase I · 2028",
+            parent: "PRG-2028",
+            start: "2028-01-05",
+            end: "2028-12-31",
+            type: "project",
+            open: true,
+            level: "phase"
+        },
+        {
+            id: "PROD-2028-FAB",
+            text: "Fab Line C",
+            parent: "PH-2028-1",
+            start: "2028-03-06",
+            end: "2028-10-30",
+            type: "task",
+            progress: 0.03,
+            color: "#D97706",
+            level: "product"
+        },
+        {
+            id: "TSK-2028-GROUNDBREAK",
+            text: "Groundbreaking",
+            parent: "PROD-2028-FAB",
+            start: "2028-04-17",
+            end: "2028-04-17",
+            type: "milestone",
+            level: "task"
+        },
+        {
+            id: "PROD-2028-YIELD",
+            text: "Yield ramp",
+            parent: "PH-2028-1",
+            start: "2028-09-04",
+            end: "2028-12-21",
+            type: "task",
+            progress: 0,
+            color: "#F59E0B",
+            level: "product"
+        },
+        {
+            id: "TSK-2028-RAMP",
+            text: "Production ramp",
+            parent: "PROD-2028-YIELD",
+            start: "2028-12-14",
+            end: "2028-12-14",
+            type: "milestone",
+            level: "task"
+        },
+
         {
             id: "TSK-YEAR-OPEN",
-            text: "Year kickoff",
+            text: "2026 kickoff",
             parent: "PF-1",
             start: "2026-01-05",
             end: "2026-01-05",
@@ -173,7 +384,7 @@ export const MOCK_TASK_LIST: TaskListPayload = {
         },
         {
             id: "TSK-YEAR-CLOSE",
-            text: "Year close review",
+            text: "2026 year close",
             parent: "PF-1",
             start: "2026-12-28",
             end: "2026-12-28",
@@ -183,7 +394,9 @@ export const MOCK_TASK_LIST: TaskListPayload = {
     ],
     links: [
         { id: "LN-1", source: "TSK-FREEZE", target: "PROD-BETA", type: 0 },
-        { id: "LN-2", source: "TSK-RTL", target: "TSK-TAPEOUT", type: 0 }
+        { id: "LN-2", source: "TSK-RTL", target: "TSK-TAPEOUT", type: 0 },
+        { id: "LN-3", source: "TSK-2024-EOL", target: "PROD-2027-NPU", type: 0 },
+        { id: "LN-4", source: "TSK-2027-GA", target: "PROD-2028-FAB", type: 0 }
     ]
 };
 
@@ -203,6 +416,12 @@ export const MOCK_COLUMNS_JSON = JSON.stringify({
 export const MOCK_MARKER_JSON = JSON.stringify({
     markers: [
         {
+            start_date: "2024-04-15",
+            css: "axgantt-marker",
+            text: "Arch review",
+            title: "2024 — architecture review complete"
+        },
+        {
             start_date: "2026-02-23",
             css: "axgantt-marker",
             text: "Design freeze",
@@ -215,10 +434,22 @@ export const MOCK_MARKER_JSON = JSON.stringify({
             title: "DRAM Gen-X — tape-out (W38)"
         },
         {
+            start_date: "2027-05-18",
+            css: "axgantt-marker",
+            text: "Silicon",
+            title: "2027 — NPU Gen-2 silicon bring-up"
+        },
+        {
+            start_date: "2028-04-17",
+            css: "axgantt-marker",
+            text: "Groundbreak",
+            title: "2028 — Fab Line C groundbreaking"
+        },
+        {
             start_date: "2026-12-28",
             css: "axgantt-marker",
             text: "Year close",
-            title: "Portfolio year-end review (W53)"
+            title: "2026 portfolio year-end review (W53)"
         }
     ]
 });
@@ -230,6 +461,11 @@ export const MOCK_HEADER = {
     roadmapRevisedAt: "2026-06-07T08:00:00"
 } as const;
 
+export const MOCK_TIMELINE = {
+    ganttStartDate: "2024-01-01",
+    ganttEndDate: "2028-12-31"
+} as const;
+
 export const MOCK_LOAD_DELAY_MS = 600;
 
 export function getAxGanttRoadmapMock(): AxGanttMockBundle {
@@ -238,6 +474,7 @@ export function getAxGanttRoadmapMock(): AxGanttMockBundle {
         scaleJson: MOCK_SCALE_JSON,
         columnsJson: MOCK_COLUMNS_JSON,
         markerJson: MOCK_MARKER_JSON,
+        ...MOCK_TIMELINE,
         ...MOCK_HEADER
     };
 }

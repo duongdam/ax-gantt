@@ -1,227 +1,181 @@
 # 7. Events & Actions
 
-Widget expose Mendix **action** properties. Trước khi `execute()`, widget set context object vào `DatasourceStore.lastActionContext`.
-
-Contract đầy đủ: [mendix-action-context.md](../specs/001-dhl-gantt-chart/contracts/mendix-action-context.md)
+Widget expose **8 Mendix action properties**. Trước khi `execute()`, widget set context object vào `JsonDataStore.lastActionContext`.
 
 ## Action catalog
 
-| Action property | Trigger | Context type |
-|-----------------|---------|--------------|
-| `onTaskClick` | Click task bar | TaskEventContext |
-| `onTaskDblClick` | Double-click task | TaskEventContext |
-| `onTaskSelected` | Task selected | TaskEventContext |
-| `onBeforeTaskChange` | Before drag/resize/edit | TaskChangeContext |
-| `onTaskChanged` | After successful edit | TaskChangeContext |
-| `onTaskCreated` | Task created | TaskCreatedContext |
-| `onTaskDeleted` | Task deleted | TaskDeletedContext |
-| `onLinkCreated` | Link drawn | LinkEventContext |
-| `onLinkDeleted` | Link removed | LinkEventContext |
-| `onLinkValidationFailed` | Circular/invalid link | LinkValidationContext |
-| `onResourceClick` | Click resource row | ResourceEventContext |
-| `onScaleChanged` | Scale/zoom change | ScaleEventContext |
-| `onDimensionFilterChanged` | Filter bar change | DimensionFilterContext |
-| `onDataParseError` | Parse validation error | ErrorEventContext |
+| Action property | Trigger | Context type | Write/Read |
+|-----------------|---------|--------------|------------|
+| `onTaskDbClick` | Double-click task bar | `TaskEventContext` | Read |
+| `onTaskSelect` | Task selection thay đổi | `TaskEventContext` | Read |
+| `onTaskCheck` | Checkbox column toggle | `TaskEventContext` | Read |
+| `onTaskUndo` | Undo operation | `TaskEventContext` | Read |
+| `onTaskMove` | Drag task xong | `TaskChangeContext` | Write |
+| `onTaskResize` | Resize task xong | `TaskChangeContext` | Write |
+| `onTaskCreate` | Task mới được tạo | `TaskChangeContext` | Write |
+| `onTaskRowDrag` | Row reorder trong grid | `TaskChangeContext` | Write |
 
 ## Context objects
 
-### TaskEventContext
+### TaskEventContext — read-only events
+
+Dùng cho: `onTaskDbClick`, `onTaskSelect`, `onTaskCheck`, `onTaskUndo`
 
 ```typescript
 interface TaskEventContext {
-  taskId: string;
-  taskLabel: string;
-  siteCode?: string;
-  sourceSystem?: string;
-  start: string;       // ISO 8601
-  end?: string;
-  progress?: number;
-  entityType: "task";
+  taskId:    string;   // id của task trong JSON
+  taskLabel: string;   // text hiển thị
+  start:     string;   // ISO 8601: "2026-02-02T00:00:00.000Z"
+  end?:      string;
+  progress?: number;   // 0.0 → 1.0
+  parentId?: string;
+  level?:    string;   // "portfolio"|"program"|"phase"|"product"|"task"
 }
 ```
 
-### TaskChangeContext
+### TaskChangeContext — write events
 
-Extends TaskEventContext:
+Dùng cho: `onTaskMove`, `onTaskResize`, `onTaskCreate`, `onTaskRowDrag`
 
 ```typescript
-interface TaskChangeContext extends TaskEventContext {
-  changeType: "move" | "resize" | "progress" | "text" | "type" | "parent" | "create" | "delete";
-  previousStart?: string;
-  previousEnd?: string;
+interface TaskChangeContext {
+  taskId:            string;
+  taskLabel:         string;
+  start:             string;
+  end?:              string;
+  progress?:         number;
+  parentId?:         string;
+  level?:            string;
+  changeType:        "move" | "resize" | "progress" | "create" | "rowDrag";
+  previousStart?:    string;   // trước khi drag
+  previousEnd?:      string;
   previousProgress?: number;
   previousParentId?: string;
-  cancelled?: boolean;
+  cancelled?:        boolean;  // true nếu widget đã rollback
 }
 ```
 
-### LinkEventContext
+## Rollback contract
 
-```typescript
-interface LinkEventContext {
-  linkId: string;
-  sourceTaskId: string;
-  targetTaskId: string;
-  linkType: 0 | 1 | 2 | 3;  // FS, SS, FF, SF
-  lag?: number;
-  entityType: "link";
-}
-```
+**Write actions** (`onTaskMove`, `onTaskResize`, `onTaskCreate`, `onTaskRowDrag`) trả về `Promise<boolean>`:
 
-### DimensionFilterContext
+| Kết quả | Hành vi widget |
+|---------|----------------|
+| Microflow thành công | Chart giữ ngày mới |
+| Microflow throw exception | Widget rollback + error toast |
+| Microflow trả về Cancel | Widget rollback + error toast |
 
-```typescript
-interface DimensionFilterContext {
-  dimensionKey: string;
-  selectedValues: string[];
-  crossFilterMode: "and" | "or";
-  resultTaskCount: number;
-  resultResourceCount: number;
-}
-```
-
-### ErrorEventContext
-
-```typescript
-interface ErrorEventContext {
-  code: string;      // E001, E002, W101, ...
-  message: string;
-  entityType?: string;
-  entityId?: string;
-}
-```
-
-## Detail dialog behavior
-
-| Interaction | Dialog opens? |
-|-------------|---------------|
-| Click task **bar** on timeline | ✅ Yes (if `enableDetailDialog=true`) |
-| Click task **row** in grid | ❌ No |
-| Click resource row | ✅ Yes |
-| Double-click task | `onTaskDblClick` only (no auto dialog) |
-
-Detection logic (`eventBridge.ts`):
-
-```typescript
-event.target.closest(".gantt_task_line, .gantt_task_content, .gantt_milestone")
-```
-
-Dialog component: `src/components/DetailDialog.tsx`
-- Hiển thị tất cả fields từ `SelectedGanttItem.raw`
-- Escape / backdrop click để đóng
-- Custom fields khi `detailDialogShowCustom=true`
-
-## Edit flow chi tiết
-
-### 1. Before drag
-
-```
-onBeforeTaskDrag:
-  - Block if isLoading
-  - Block if !features.isTaskEditable(task)
-  - Save snapshot for rollback
-  - setDragging(true)
-```
-
-### 2. During drag
-
-dhtmlx handles visual update internally.
-
-### 3. After drag/update
-
-```
-onAfterTaskUpdate / onAfterTaskDrag:
-  1. Map dhtmlx task → GanttTask
-  2. Optimistic update in DatasourceStore
-  3. Set TaskChangeContext
-  4. Call onBeforeTaskChange (if configured)
-     → false = reject
-  5. Version check (optimistic lock)
-  6. Call onTaskChanged (async)
-     → false/throw = rollback
-  7. Clear snapshot on success
-```
-
-### 4. Rollback
-
-```
-datasource.updateTask(taskId, snapshot)
-engine.rollbackTask(snapshot)
-showUiMessage("Changes could not be saved...")
-```
-
-## Link events
-
-### Create
-
-1. User draws link between tasks
-2. `onBeforeLinkAdd` — validate (not self-link, enableLinkDraw)
-3. `onAfterLinkAdd` — add to store, fire `onLinkCreated`
-
-### Circular dependency
-
-dhtmlx fires `onCircularLinkError`:
-- Toast: "Circular dependency detected. Link was not created." (E002)
-- `onLinkValidationFailed` action
-
-## Scale change
-
-Toolbar (khi enabled) hoặc mousewheel zoom → `onScaleChanged`:
-
-```typescript
-interface ScaleEventContext {
-  scale: "hour" | "day" | "week" | "month" | "quarter" | "year";
-  scrollDate?: string;
-  zoomLevel?: number;
-  trigger: "toolbar" | "mousewheel" | "property";
-}
-```
+Sau rollback, widget set `cancelled: true` trong context.
 
 ## Microflow patterns
 
-### onTaskClick — show custom page
+### onTaskDbClick — mở detail page
 
 ```
-1. Widget sets TaskEventContext
-2. Microflow: retrieve Task by TaskId from context
-3. Show page with Task detail
+1. Widget sets TaskEventContext { taskId, taskLabel, start, end, ... }
+2. Nanoflow/Microflow:
+   a. Retrieve RoadmapTask WHERE TaskKey = $latestContext.taskId
+   b. Show page: Page_TaskDetail($RoadmapTask)
 ```
 
-### onTaskChanged — persist edit
+### onTaskMove / onTaskResize — persist dates
 
 ```
-1. Read TaskChangeContext (taskId, changeType, start, end)
-2. Retrieve Task entity
-3. Validate business rules
-4. Update StartDate, EndDate, Progress
-5. Increment Version
-6. Commit
-7. Return true (or false to trigger rollback)
+1. Widget sets TaskChangeContext {
+     taskId, changeType: "move",
+     start: "2026-03-15", end: "2026-06-30",
+     previousStart: "2026-02-02", previousEnd: "2026-05-18"
+   }
+2. Microflow:
+   a. Retrieve RoadmapTask WHERE TaskKey = taskId
+   b. Validate (version, permissions...)
+   c. Update StartDate, EndDate
+   d. Commit
+   e. Trigger page refresh (re-run taskListJson expression)
+3. On exception → widget auto-rollback
 ```
 
-### onBeforeTaskChange — validation gate
+### onTaskCreate — tạo mới
 
 ```
-1. Check user role / task status
-2. Return false to cancel edit (widget rolls back)
+1. Widget sets TaskChangeContext { changeType: "create", start, end, parentId }
+2. Microflow:
+   a. Create new RoadmapTask entity
+   b. Set StartDate, EndDate, ParentKey từ context
+   c. Commit
+   d. Trigger page refresh
+```
+
+### onTaskSelect — track selection
+
+```
+1. Widget sets TaskEventContext { taskId, taskLabel }
+2. Nanoflow:
+   a. Set page variable $SelectedTaskId = taskId
+   b. Refresh sidebar / info panel
 ```
 
 ## dhtmlx event mapping
 
-| dhtmlx Event | Widget handler |
-|--------------|----------------|
-| `onTaskClick` | handleTaskClick |
-| `onTaskDblClick` | handleTaskDblClick |
-| `onBeforeTaskDrag` | handleBeforeTaskDrag |
-| `onAfterTaskDrag` | handleAfterTaskDrag |
-| `onBeforeTaskChanged` | handleBeforeTaskChanged |
-| `onAfterTaskUpdate` | handleAfterTaskUpdate |
-| `onAfterTaskAdd` | handleTaskCreated |
-| `onAfterTaskDelete` | handleTaskDeleted |
-| `onBeforeLinkAdd` | handleBeforeLinkAdd |
-| `onAfterLinkAdd` | handleAfterLinkAdd |
-| `onAfterLinkDelete` | handleAfterLinkDelete |
-| `onCircularLinkError` | handleLinkValidationFailed |
-| `onTaskRowClick` | handleResourceClick (resource store) |
+File: `src/engine/eventBridge.ts`
+
+| dhtmlx Event | Widget Handler | Mendix Action |
+|--------------|----------------|---------------|
+| `onTaskDblClick` | handleTaskDblClick | `onTaskDbClick` |
+| `onBeforeTaskDrag` | handleBeforeTaskDrag | — (save snapshot) |
+| `onAfterTaskDrag` | handleAfterTaskDrag | `onTaskMove` |
+| task resize | handleTaskResize | `onTaskResize` |
+| `onAfterTaskAdd` | handleTaskCreated | `onTaskCreate` |
+| `onTaskClick` | handleTaskSelect | `onTaskSelect` |
+| `onRowDragEnd` | handleRowDragEnd | `onTaskRowDrag` |
 
 EventBridge lifecycle: `attach()` on engine init, `detach()` on destroy.
+
+## Action execution flow (write)
+
+```
+1. onBeforeTaskDrag
+   → check features.isTaskEditable(task)
+   → save snapshot: { id, start, end, progress }
+
+2. onAfterTaskDrag
+   → optimistic update: chart hiện ngày mới ngay
+   → build TaskChangeContext
+   → set JsonDataStore.lastActionContext
+
+3. call action.execute() → Mendix microflow runs
+   │
+   ├── success → clear snapshot, giữ ngày mới
+   └── fail    → rollbackTask(snapshot)
+                 engine.setTask(id, { start: snapshot.start, end: snapshot.end })
+                 showErrorToast("Changes could not be saved")
+```
+
+## Action execution flow (read)
+
+```
+1. onTaskDblClick
+   → build TaskEventContext
+   → set JsonDataStore.lastActionContext
+
+2. call action.execute() → Mendix nanoflow opens page
+   (no rollback needed)
+```
+
+## Không configure action
+
+Nếu action không được wire (null):
+
+```typescript
+const executeAction = useCallback((action?: ActionValue) => {
+  if (action?.canExecute) {
+    action.execute?.();
+  }
+}, []);
+```
+
+Widget bỏ qua khi `action = undefined` — không throw lỗi.
+
+## Kiểm tra canExecute
+
+Widget check `action.canExecute` trước khi `execute()`. Đảm bảo microflow không bị block bởi security/page context khi widget call action.

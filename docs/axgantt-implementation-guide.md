@@ -2,7 +2,7 @@
 
 **Widget**: `mendix.axgantt.AxGantt`  
 **Version**: 1.0.0  
-**Date**: 2026-06-07  
+**Updated**: 2026-06-07  
 
 ---
 
@@ -708,7 +708,54 @@ AxGantt widget properties:
 
 ---
 
-## 8. Development local
+## 8. UI Framework — Ant Design
+
+Widget sử dụng **antd** (`^6.4.3`) làm UI component library. Theme được tự động kế thừa từ Mendix Atlas UI thông qua hook `useAtlasTheme`.
+
+### Cơ chế `useAtlasTheme`
+
+```typescript
+// src/hooks/useAtlasTheme.ts
+export function useAtlasTheme(): ThemeConfig {
+    return useMemo(() => {
+        // Đọc CSS variables từ Mendix Atlas UI (:root)
+        const colorPrimary = readCssVar("--color-brand-primary", "#D40511");
+        ...
+        return { algorithm: theme.defaultAlgorithm, token: { colorPrimary, ... } };
+    }, []);
+}
+```
+
+| Atlas UI CSS variable | antd token | Fallback |
+|---|---|---|
+| `--color-brand-primary` | `colorPrimary` | `#D40511` (DHL red) |
+| `--color-feedback-success` | `colorSuccess` | `#52c41a` |
+| `--color-feedback-warning` | `colorWarning` | `#faad14` |
+| `--color-feedback-danger` | `colorError` | `#ff4d4f` |
+| `--color-text-default` | `colorText` | `#262626` |
+| `--color-bg-default` | `colorBgContainer` | `#ffffff` |
+| `--border-radius-default` | `borderRadius` | `4` |
+| `--font-family-default` | `fontFamily` | `inherit` |
+| `--font-size-default` | `fontSize` | `14` |
+
+### Cây provider
+
+```
+<WidgetErrorBoundary>
+  <ConfigProvider theme={atlasTheme}>   ← antd theme từ Atlas UI
+    <StoreProvider store={store}>       ← MobX store
+      <AxGanttInner />
+    </StoreProvider>
+  </ConfigProvider>
+</WidgetErrorBoundary>
+```
+
+> Khi chạy **trong Mendix**: antd tự khớp màu/font với Atlas UI page theme.  
+> Khi chạy **local/mock**: dùng fallback values (DHL red `#D40511`, border-radius 4px...).
+
+---
+
+## 9. Development local
 
 ### Bật mock data (không cần Mendix backend)
 
@@ -728,15 +775,15 @@ Widget sẽ load `axgantt-roadmap.mock.ts` với:
 ### Chạy dev server
 
 ```bash
-corepack enable
-corepack prepare pnpm@11.8.1 --activate
 pnpm install
 pnpm run dev
 ```
 
+> `packageManager` đang dùng `pnpm@10.30.0` (pnpm 11.8.1 chưa có trên npm registry tại thời điểm build).
+
 ---
 
-## 9. Checklist triển khai
+## 10. Checklist triển khai
 
 | # | Việc cần làm | Ai làm |
 |---|-------------|--------|
@@ -757,7 +804,7 @@ pnpm run dev
 
 ---
 
-## 10. Lưu ý quan trọng
+## 11. Lưu ý quan trọng
 
 ### Thứ tự tasks trong JSON
 
@@ -789,6 +836,29 @@ Widget tự re-render khi expression `taskListJson` thay đổi. Đảm bảo:
 1. Microflow commit entity
 2. Re-run `MF_BuildTaskListJson`
 3. Update page variable → expression cập nhật → widget nhận data mới
+
+### Dependencies chính
+
+| Package | Version | Vai trò |
+|---------|---------|---------|
+| `dhtmlx-gantt` | `^9.1.4` | Gantt chart engine |
+| `antd` | `^6.4.3` | UI component library |
+| `mobx` | `^6.16.0` | State management |
+| `mobx-react-lite` | `^4.1.1` | React bindings cho MobX |
+| `classnames` | `^2.5.1` | CSS class utilities |
+
+**devDependencies:**
+
+| Package | Version | Vai trò |
+|---------|---------|---------|
+| `react` | `18.2.0` | React runtime (compile/type-check) |
+| `react-dom` | `18.2.0` | React DOM |
+| `@types/react` | `^18.2.0` | TypeScript types |
+| `mendix` | `11.10.0` | Mendix widget SDK types |
+
+> React và React DOM là **devDependencies** vì Mendix runtime cung cấp React cho widget qua host page — không bundle vào `.mpk`.
+
+---
 
 ### Rollback tự động
 

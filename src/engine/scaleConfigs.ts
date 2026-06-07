@@ -1,4 +1,4 @@
-import type { GanttScale } from "../store/types";
+import type { GanttScale } from "../stores/types";
 
 export const scaleConfigs: Record<GanttScale, Array<{ unit: string; step: number; format: string }>> = {
     hour: [

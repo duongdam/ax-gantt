@@ -1,197 +1,193 @@
-# 6. Filtering & Timeline
+# 6. Timeline & Scale
 
-## Executive timeline
+## Tổng quan
 
-Kích hoạt khi widget property `initialScale = week`.
+Timeline configuration được truyền vào qua `scaleJson` expression. Nếu để trống hoặc `{}`, widget dùng default **năm + tuần W01–W53**.
 
-### Dual-scale header
+## scaleJson schema
 
+```json
+{
+  "anchorYear": 2026,
+  "weekLabelFormat": "W##",
+  "scales": [
+    { "unit": "year", "step": 1, "format": "year" },
+    { "unit": "week", "step": 1, "format": "W##" }
+  ]
+}
 ```
-┌─────────────────────────────────────────────────────────┐
-│  Phase I · 2026          │        Phase II · 2026      │  ← top (month, step=6)
-├──────┬──────┬──────┬──────┬──────┬──────┬──────┬──────┤
-│  T1  │  T2  │  T3  │  T4  │  T5  │  T6  │  T7  │  T8  │  ← bottom (week, step=1)
-└──────┴──────┴──────┴──────┴──────┴──────┴──────┴──────┘
-```
 
-| Scale | Unit | Format | Logic |
-|-------|------|--------|-------|
-| Top | month (step 6) | `Phase I · {year}` / `Phase II · {year}` | Jan–Jun = Phase I |
-| Bottom | week | `T{n}` | ISO week index từ anchor year |
+### Fields
 
-**Anchor year:** `EXECUTIVE_TIMELINE_ANCHOR_YEAR = 2026` (`src/engine/executiveTimeline.ts`)
+| Field | Type | Default | Mô tả |
+|-------|------|---------|-------|
+| `anchorYear` | number | `2026` | Năm gốc cho ISO week calculation |
+| `weekLabelFormat` | string | `"W##"` | Format label tuần |
+| `scales` | ScaleUnit[] | year+week | Mảng các scale rows |
 
-Week index calculation:
+### ScaleUnit
+
+| Field | Type | Mô tả |
+|-------|------|-------|
+| `unit` | string | `"year"` \| `"month"` \| `"week"` \| `"day"` |
+| `step` | number | Bước nhảy (VD: 1 = từng tuần) |
+| `format` | string | Format string hoặc preset |
+
+### weekLabelFormat
+
+| Giá trị | Hiển thị |
+|---------|---------|
+| `"W##"` | W01, W02, … W53 |
+| `"T##"` | T01, T02, … (legacy format) |
+
+## Default scale (khi scaleJson trống)
 
 ```typescript
-getWeekIndexFromDate(date, anchorYear)
-// T1 = first ISO week starting from Jan 1 anchor year
+export const DEFAULT_SCALE_PAYLOAD: ScalePayload = {
+  anchorYear: 2026,
+  weekLabelFormat: "W##",
+  scales: [
+    { unit: "year", step: 1, format: "year" },
+    { unit: "week", step: 1, format: "W##" }
+  ]
+};
 ```
 
-### Grid presentation (executive)
+Kết quả hiển thị:
 
-| Column | Width | Content |
-|--------|-------|---------|
-| Portfolio / Product | 300px, tree | Task text, WBS expand |
-| Week | 88px | `periodLabel` (e.g. T6–T52) |
-| % | 48px | Progress (products only) |
+```
+┌───────────────────────────────────────────────────────────┐
+│                         2026                              │ ← year row
+├──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┤
+│W1│W2│W3│W4│W5│W6│W7│W8│W9│..│  │  │  │  │  │  │  │  │W53│ ← week row
+└──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┘
+```
 
-### Visual styling by level
+## Lưu ý ISO week 2026
 
-CSS classes từ `custom.level`:
+**2026 có 53 tuần** (ISO 8601):
+- W01 2026: Jan 5 – Jan 11
+- W53 2026: Dec 28 2026 – Jan 3 2027
 
-| Level | Row class | Bar class | Bar text |
-|-------|-----------|-----------|----------|
-| company | `dhl-gantt-row--company` | `dhl-gantt-bar--company` | Hidden |
-| program | `dhl-gantt-row--program` | `dhl-gantt-bar--program` | Hidden |
-| product | `dhl-gantt-row--product` | `dhl-gantt-bar--product` | Visible |
-| milestone | `dhl-gantt-row--milestone` | diamond marker | — |
+Khi dùng `anchorYear: 2026`, widget tự tính đủ 53 weeks.
 
-Styles: `src/ui/DhlGanttChart.css`
+## Scale builder
 
-### Standard scale (non-week)
+File: `src/engine/scaleBuilder.ts`
 
-Khi `initialScale` ≠ `week`:
-
-- Scales từ `scaleConfigs.ts` (hour/day/month/quarter/year)
-- Columns: Task, Start, Days, Site
-
-## DimensionFilterBar
-
-Component: `src/components/DimensionFilterBar.tsx`
-
-UI gồm 2 tầng:
-
-### 1. Week tabs (T1, T2, …)
-
-- Generated bởi `getWeekBuckets(model)` — chỉ weeks có task overlap
-- Click tab → `dimension.selectWeek(start, end)` → time slice
-- Auto-select week đầu tiên on load
-- Scroll chart tới week start (via GanttContainer callback)
-
-Tab hiển thị:
-- Label: `T{n}`
-- Sub-label: date range (e.g. `Jan 6 – Jan 12`)
-
-### 2. Product segments
-
-Khi week active, hiện danh sách products/milestones overlap week đó:
-
-- Label header: `Products · T{n}`
-- Button **All** — clear segment filter
-- Mỗi segment: product name + date range tooltip
-
-Click segment → `dimension.selectProjectSegment(taskId)` — filter tree tới subtree của product đó (giữ ancestors).
-
-## Dimension slicer engine
-
-File: `src/dimensions/dimensionSlicer.ts`
-
-### Dimension keys
+Chuyển `ScalePayload` → cấu hình dhtmlx:
 
 ```typescript
-type DimensionKey =
-  | "time"
-  | "site"
-  | "project"
-  | "resource"
-  | "sourceSystem"
-  | "department"
-  | "status";
+buildDhtmlxScale(payload: ScalePayload): DhtmlxScaleConfig
 ```
 
-### Filter application order
+Với `weekLabelFormat: "W##"`:
+- dhtmlx formatter: `(date) => "W" + getIsoWeek(date).toString().padStart(2, "0")`
 
+## Timeline range (ganttStartDate / ganttEndDate)
+
+Widget props:
+
+| Property | Type | Mô tả |
+|----------|------|-------|
+| `ganttStartDate` | DateTime | Giới hạn trái của visible range |
+| `ganttEndDate` | DateTime | Giới hạn phải của visible range |
+
+Nếu không set → dhtmlx tự tính range từ tasks.
+
+**Khuyến nghị:**
 ```
-1. dimensionSlicer(filters, crossFilterMode, timeRange)
-2. filterBySegmentRoot(segmentRootId)  — executive product filter
-3. enrichTaskDimensions()              — add computed dimension values
-```
-
-### Cross-filter modes
-
-| Mode | Logic |
-|------|-------|
-| `and` | Task phải match **tất cả** active dimension filters |
-| `or` | Task match **bất kỳ** active filter |
-
-Empty filter values = dimension không active (pass-through).
-
-### Debounce
-
-DimensionStore debounce **300ms** trước khi apply filters → tránh re-render liên tục khi user click nhiều chips.
-
-### Server filter mode
-
-`filterMode = server`:
-- `getSlicedModel()` return full model unchanged
-- Mendix datasource phải pre-filter data
-- Dùng cho dataset lớn (>5000 tasks)
-
-## Programmatic filtering (code)
-
-```typescript
-const dimension = useDimensionStore();
-
-// Filter by site
-dimension.setFilter("site", ["HS-01", "VN-02"]);
-
-// Filter by source system
-dimension.setFilter("sourceSystem", ["MES", "PPM"]);
-
-// Cross-filter mode
-dimension.setCrossFilterMode("and");
-
-// Time range
-dimension.setTimeRange(new Date("2026-03-01"), new Date("2026-03-31"));
-
-// Week + product (executive UI)
-dimension.selectWeek(weekStart, weekEnd);
-dimension.selectProjectSegment("PROD-ZFOLD");
-
-// Clear all
-dimension.clearAllFilters();
+ganttStartDate = [%BeginOfCurrentYear%]
+ganttEndDate   = [%EndOfCurrentYear%]
 ```
 
-## Expression filters (Mendix page)
+## Initial scroll
 
-Widget properties Group 16 — evaluated on page load / refresh:
+Property `initialScroll` (DateTime): scroll tới ngày này khi load. Hữu ích khi muốn focus vào "hôm nay" hoặc một milestone cụ thể:
 
-| Expression | Effect |
-|------------|--------|
-| `filterSiteCodes` | `"HS-01,VN-02"` → site filter |
-| `filterSourceSystems` | Source system filter |
-| `filterDepartments` | Department filter |
-| `filterStatuses` | Status filter |
-| `filterDateFrom` / `filterDateTo` | Time range |
-| `filterSearch` | Text search on task label |
+```
+initialScroll = [%CurrentDateTime%]
+```
 
-## Grouping
+## Timeline markers (markerJson)
 
-`primaryGroupDimension` → GanttEngine grouping plugin:
+Cần bật `enableMarker = true`.
 
-| Value | Behavior |
-|-------|----------|
-| `none` | Standard WBS tree (parentId) |
-| `site` | Group rows by siteCode |
-| `project` | Group by root project |
-| `sourceSystem` | Group by source system |
-| `department` | Group by department |
+```json
+{
+  "markers": [
+    {
+      "start_date": "2026-06-07",
+      "css":        "axgantt-marker",
+      "text":       "Today",
+      "title":      "Current date"
+    },
+    {
+      "start_date": "2026-09-21",
+      "css":        "axgantt-marker",
+      "text":       "Tape-out",
+      "title":      "DRAM Gen-X tape-out deadline"
+    }
+  ]
+}
+```
 
-Executive demo khuyến nghị `none` — hierarchy đã có sẵn trong mock.
+### MarkerDef fields
 
-## Scroll sync
+| Field | Type | Mô tả |
+|-------|------|-------|
+| `start_date` | string | `YYYY-MM-DD` |
+| `css` | string | CSS class thêm vào marker line |
+| `text` | string | Label hiển thị trên marker |
+| `title` | string | Tooltip khi hover |
 
-Khi chọn week tab, `GanttContainer` gọi `engine.scrollToDate(week.start)` để đưa timeline tới tuần được chọn.
+### CSS tùy chỉnh marker
 
-## Week timeline utilities
+```css
+/* src/ui/AxGantt.css */
+.axgantt-marker {
+  border-left: 2px dashed #D40511;
+}
+.axgantt-marker .gantt_marker_content {
+  background: #D40511;
+  color: #fff;
+  font-size: 11px;
+}
+```
 
-File: `src/dimensions/weekTimeline.ts`
+## Scale presets khác
 
-| Function | Purpose |
-|----------|---------|
-| `getWeekBuckets(model)` | Build WeekBucket[] from task date range |
-| `findWeekByTimeRange(weeks, from, to)` | Match active week |
-| `getProjectSegmentsForWeek(model, week)` | Products/milestones in week |
+### Tháng + tuần
 
-Unit tests: `src/dimensions/__tests__/weekTimeline.spec.ts`
+```json
+{
+  "anchorYear": 2026,
+  "weekLabelFormat": "W##",
+  "scales": [
+    { "unit": "month", "step": 1, "format": "%M %Y" },
+    { "unit": "week",  "step": 1, "format": "W##"   }
+  ]
+}
+```
+
+### Quý + tháng
+
+```json
+{
+  "scales": [
+    { "unit": "year",  "step": 1, "format": "year"   },
+    { "unit": "month", "step": 3, "format": "Q%q"    }
+  ]
+}
+```
+
+### Ngày (project chi tiết)
+
+```json
+{
+  "scales": [
+    { "unit": "month", "step": 1, "format": "%M" },
+    { "unit": "day",   "step": 1, "format": "%d" }
+  ]
+}
+```

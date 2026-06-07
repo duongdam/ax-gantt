@@ -1,4 +1,4 @@
-import type { GanttTask } from "../store/types";
+import type { GanttTask } from "../stores/types";
 
 export type AxGanttChangeType = "move" | "resize" | "progress" | "create" | "rowDrag";
 

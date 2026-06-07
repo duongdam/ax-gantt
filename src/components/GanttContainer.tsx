@@ -7,7 +7,7 @@ import type { GanttEngine } from "../engine/GanttEngine";
 import { createEventBridge, type EventBridge, type EventBridgeActions } from "../engine/eventBridge";
 import { useJsonDataSync } from "../hooks/useJsonDataSync";
 import { useGanttLifecycle } from "../hooks/useGanttLifecycle";
-import { useGanttStore, useJsonDataStore } from "../store/StoreContext";
+import { useGanttStore, useJsonDataStore } from "../stores/StoreContext";
 import { GanttEmptyState } from "./GanttEmptyState";
 import { GanttErrorToast } from "./GanttErrorToast";
 import { LoadingOverlay } from "./LoadingOverlay";

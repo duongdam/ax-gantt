@@ -3,17 +3,14 @@
  * WARNING: All changes made to this file will be overwritten
  * @author Mendix Widgets Framework Team
  */
-import { ActionValue, DynamicValue } from "mendix";
 import { CSSProperties } from "react";
+import { ActionValue, DynamicValue } from "mendix";
 
 export interface AxGanttContainerProps {
     name: string;
     class: string;
     style?: CSSProperties;
     tabIndex?: number;
-    class: string;
-    style: string;
-    tabIndex: number;
     useMockData: boolean;
     roadmapNo?: DynamicValue<string>;
     roadmapRevision?: DynamicValue<string>;
@@ -26,8 +23,8 @@ export interface AxGanttContainerProps {
     ganttStartDate?: DynamicValue<Date>;
     ganttEndDate?: DynamicValue<Date>;
     initialScroll?: DynamicValue<Date>;
-    ganttWidth?: number;
-    ganttHeight?: number;
+    ganttWidth: number;
+    ganttHeight: number;
     defaultExpandTree: boolean;
     showAddTaskButton: boolean;
     enableMarker: boolean;
@@ -65,9 +62,6 @@ export interface AxGanttPreviewProps {
     readOnly: boolean;
     renderMode: "design" | "xray" | "structure";
     translate: (text: string) => string;
-    class: string;
-    style: string;
-    tabIndex: number | null;
     useMockData: boolean;
     roadmapNo: string;
     roadmapRevision: string;

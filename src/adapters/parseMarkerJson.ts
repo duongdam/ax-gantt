@@ -1,4 +1,4 @@
-import type { JsonParseResult, MarkerDef, MarkerPayload } from "../store/types";
+import type { JsonParseResult, MarkerDef, MarkerPayload } from "../stores/types";
 
 function normalizeMarker(raw: Partial<MarkerDef>): MarkerDef | null {
     if (!raw.start_date) {

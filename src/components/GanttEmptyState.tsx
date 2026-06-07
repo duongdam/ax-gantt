@@ -1,7 +1,7 @@
 import { observer } from "mobx-react-lite";
 import { ReactElement, useCallback } from "react";
 
-import { useJsonDataStore } from "../store/StoreContext";
+import { useJsonDataStore } from "../stores/StoreContext";
 
 export type GanttEmptyStateVariant = "empty" | "error";
 

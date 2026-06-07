@@ -1,235 +1,168 @@
 # 3. Configuration
 
-Widget có **17 property groups** trong `src/DhlGanttChart.xml`. Contract đầy đủ: [widget-properties-schema.md](../specs/001-dhl-gantt-chart/contracts/widget-properties-schema.md).
+Widget có **5 property groups** trong `src/AxGantt.xml`.
 
 ## Group 1: General
 
 | Property | Type | Default | Mô tả |
 |----------|------|---------|-------|
-| `viewMode` | enum | `project` | `project` \| `resourceTimeline` \| `hybrid` |
-| `readOnly` | boolean | `false` | Khóa toàn bộ chỉnh sửa |
-| `useMockData` | boolean | `false` | Dùng mock thay Mendix datasource |
-| `timeZoneMode` | enum | `browserLocal` | `utc` \| `browserLocal` \| `fixed` |
-| `fixedTimeZone` | string | — | IANA timezone khi mode=fixed |
-| `dateUnit` | enum | `day` | `minute` \| `hour` \| `day` — đơn vị duration |
-| `emptyMessage` | string | "No schedule data" | Text khi không có task |
-| `showTrialNotice` | boolean | `true` | Banner trial dhtmlx |
+| `class` | string | — | CSS class thêm vào root element |
+| `style` | string | — | Inline style |
+| `tabIndex` | integer | `0` | Focus order |
+| `useMockData` | boolean | `false` | Load mock roadmap JSON thay Mendix expression |
 
-## Group 2: Multiple Dimensions
+## Group 2: PM Roadmap Header
+
+Hiển thị thông tin tài liệu phía trên chart. Tất cả là `type="expression"`.
+
+| Property | Return type | Mô tả |
+|----------|-------------|-------|
+| `roadmapNo` | String | Số hiệu tài liệu, VD: `Msoc251030-155` |
+| `roadmapRevision` | String | Revision label, VD: `3` |
+| `roadmapRevisedBy` | String | Tên user sửa lần cuối |
+| `roadmapRevisedAt` | DateTime | Thời điểm revision |
+
+**Bind ví dụ:**
+```
+roadmapNo        = $Roadmap/DocumentNo
+roadmapRevision  = $Roadmap/Revision
+roadmapRevisedBy = $Roadmap/RevisedBy
+roadmapRevisedAt = $Roadmap/RevisedAt
+```
+
+## Group 3: Data (JSON)
+
+Tất cả properties đều `type="expression"` trả về String (hoặc DateTime).
+
+| Property | Return type | Required | Mô tả |
+|----------|-------------|----------|-------|
+| `taskListJson` | String | ✅ (hoặc mock) | JSON với tasks array + optional links array |
+| `scaleJson` | String | ❌ | Timeline scale config. Empty/`{}` = default year+week |
+| `columnsJson` | String | ❌ | Grid column definitions. Empty = 1 cột "Project" |
+| `markerJson` | String | ❌ | Timeline markers. Cần `enableMarker=true` |
+| `ganttStartDate` | DateTime | ❌ | Giới hạn trái của timeline |
+| `ganttEndDate` | DateTime | ❌ | Giới hạn phải của timeline |
+| `initialScroll` | DateTime | ❌ | Scroll tới ngày này khi load |
+
+**Bind ví dụ:**
+```
+taskListJson  = MF_BuildTaskListJson($Roadmap)
+scaleJson     = '{}'
+columnsJson   = MF_BuildColumnsJson()
+markerJson    = MF_BuildMarkerJson($Roadmap)
+ganttStartDate = [%BeginOfCurrentYear%]
+ganttEndDate   = [%EndOfCurrentYear%]
+```
+
+### Default khi để trống
+
+| Property | Default behavior |
+|----------|-----------------|
+| `scaleJson` | `{ anchorYear: 2026, weekLabelFormat: "W##", scales: [year+week] }` |
+| `columnsJson` | `{ columns: [{ name: "text", label: "Project", tree: true, width: 300 }] }` |
+| `markerJson` | Không có marker |
+
+## Group 4: Display
 
 | Property | Type | Default | Mô tả |
 |----------|------|---------|-------|
-| `dimensionConfig` | object list | — | Cấu hình từng axis (key, enabled, groupBy, showInGrid, showInFilterBar, label) |
-| `primaryGroupDimension` | enum | `none` | Group rows: `none` \| site \| project \| sourceSystem \| department |
-| `crossFilterMode` | enum | `and` | `and` \| `or` giữa các dimension |
-| `filterMode` | enum | `client` | `client` (slicer trong widget) \| `server` (Mendix refresh) |
-| `showDimensionFilterBar` | boolean | `true` | Hiện week/product filter bar |
-| `onDimensionFilterChanged` | action | — | Khi filter thay đổi |
+| `ganttWidth` | integer | `0` | Width px (0 = auto) |
+| `ganttHeight` | integer | `600` | Height px |
+| `defaultExpandTree` | boolean | `true` | Mở rộng project rows khi load |
+| `showAddTaskButton` | boolean | `false` | Hiện nút + thêm task dhtmlx |
+| `enableMarker` | boolean | `false` | Bật timeline markers từ `markerJson` |
+| `autoFit` | boolean | `false` | Fit timeline vào tasks khi load |
+| `autoScroll` | boolean | `true` | Auto-scroll khi date thay đổi |
+| `fitTasks` | boolean | `false` | Zoom fit all tasks |
 
-**Dimension keys:** `site`, `sourceSystem`, `department`, `status`, `project`, `resource`
+## Group 5: Interaction
 
-## Group 3: Data — Tasks
-
-| Property | Required | Attribute types |
-|----------|----------|-----------------|
-| `tasksDataSource` | ✅ (nếu không mock) | datasource list |
-| `taskId` | ✅ | String, AutoNumber, Integer, Long |
-| `taskLabel` | ✅ | String |
-| `taskStart` | ✅ | DateTime |
-| `taskEnd` | ❌ | DateTime |
-| `taskDuration` | ❌ | Integer, Long, Decimal |
-| `taskParentId` | ❌ | String, Integer, Long |
-| `taskProgress` | ❌ | Decimal, Integer |
-| `taskType` | ❌ | String, Enum — `task` \| `project` \| `milestone` |
-| `taskOpen` | ❌ | Boolean |
-| `taskReadOnly` | ❌ | Boolean — per-task lock |
-| `taskColor` | ❌ | String |
-| `taskSiteCode` | ❌ | String, Enum |
-| `taskSourceSystem` | ❌ | String, Enum |
-| `taskStatus` | ❌ | String, Enum |
-| `taskVersion` | ❌ | String, Integer, Long — optimistic lock |
-| `taskModifiedAt` | ❌ | DateTime |
-
-**Quy tắc:** Cần `taskEnd` **hoặc** `taskDuration`. Nếu map cả hai, duration được ưu tiên (warning W201).
-
-## Group 4: Data — Links
-
-| Property | Mô tả |
-|----------|-------|
-| `linksDataSource` | List dependency |
-| `linkId`, `linkSource`, `linkTarget` | Required khi có links |
-| `linkType` | `0`=FS, `1`=SS, `2`=FF, `3`=SF |
-| `linkLag` | Lag days/hours |
-
-## Group 5: Data — Resources
-
-| Property | Mô tả |
-|----------|-------|
-| `resourcesDataSource` | Required cho `resourceTimeline` / `hybrid` |
-| `resourceId`, `resourceName` | Required |
-| `resourceType` | human, machine, room, vendor, other |
-| `resourceSiteCode`, `resourceDepartment` | Dimension keys |
-| `resourceCapacity` | Capacity per day — over-allocation highlight |
-
-## Group 6: Data — Assignments
-
-| Property | Mô tả |
-|----------|-------|
-| `assignmentsDataSource` | Task ↔ Resource mapping |
-| `assignmentId`, `assignmentTaskId`, `assignmentResourceId`, `assignmentValue` | Required |
-| `assignmentStart`, `assignmentEnd` | Optional date range |
-
-## Group 7: Display & Timeline
-
-| Property | Default | Mô tả |
-|----------|---------|-------|
-| `initialScale` | `week` | `hour` \| `day` \| `week` \| `month` \| `quarter` \| `year` |
-| `initialScrollDate` | — | Expression DateTime — scroll tới ngày |
-| `showGrid` / `showChart` | `true` | Hiện grid / timeline |
-| `rowHeight` | `36` | px |
-| `barHeight` | `24` | px |
-| `fitOnLoad` | `true` | Fit tasks on load |
-| `highlightWeekends` | `true` | CSS class weekend |
-| `workingTimeEnabled` | `false` | Working hours |
-| `showTodayMarker` | `true` | Vertical today line |
-| `enableTooltips` | `true` | Hover tooltips |
-| `enableQuickInfo` | `false` | dhtmlx quick info popup |
-| `enableSplitTasks` | `false` | Split task bars |
-| `enableBaselines` | `false` | **PRO** — baseline bars |
-| `showDeadlines` | `false` | Deadline markers |
-| `taskBarTemplate` | `default` | `default` \| `compact` |
-| `showToolbar` | `true` | GanttToolbar (hiện ẩn trong executive view) |
-
-### Executive vs standard scale
-
-| `initialScale` | Timeline | Grid columns |
-|----------------|----------|--------------|
-| `week` | Phase I/II + T-weeks | Portfolio / Product, Week, % |
-| Khác | scaleConfigs chuẩn | Task, Start, Days, Site |
-
-## Group 8: Task Editing
-
-| Property | Default |
-|----------|---------|
-| `enableDragMove` | `true` |
-| `enableResize` | `true` |
-| `enableProgressDrag` | `true` |
-| `snapToGrid` | `true` |
-| `enableCreateTask` | `false` |
-| `enableDeleteTask` | `false` |
-| `enableHierarchyEdit` | `true` |
-| `enableLightbox` | `true` |
-| `enableInlineEdit` | `false` |
-| `enableCopyPaste` | `false` |
-| `enableContextMenu` | `true` |
-
-**Permission model:** `readOnly=true` → khóa tất cả. Ngược lại, `taskReadOnly` trên từng task quyết định task đó có edit được không.
-
-## Group 9: Links
-
-| Property | Default |
-|----------|---------|
-| `enableLinkDraw` | `true` |
-| `enableLinkDelete` | `true` |
-
-## Group 10: Selection & Keyboard
-
-| Property | Default |
-|----------|---------|
-| `enableMultiselect` | `false` |
-| `enableKeyboard` | `true` |
-| `selectedTaskId` | Writable attribute — two-way selection |
-| `selectedResourceId` | Writable attribute |
-
-## Group 11–13: PRO Features
-
-| Group | Properties |
-|-------|------------|
-| Scheduling | `autoScheduling`, `enableConstraints`, `showCriticalPath` |
-| Resources | `showResourceHistogram` |
-| Export & Undo | `enableUndo`, `enableExport` |
-
-Cần `licenseKey` hợp lệ. Trial: feature silent hoặc watermark.
-
-## Group 14: Detail Dialog
-
-| Property | Default |
-|----------|---------|
-| `enableDetailDialog` | `true` |
-| `detailDialogTitle` | — |
-| `detailDialogShowCustom` | `true` — hiện `custom` fields |
-
-## Group 15: Events
-
-Xem [07-events-and-actions.md](./07-events-and-actions.md).
-
-## Group 16: Dimension Filters (Expressions)
-
-Bind từ page context — áp dụng filter programmatically:
-
-| Expression | Return type |
-|------------|-------------|
-| `filterSiteCodes` | String (comma-separated) |
-| `filterSourceSystems` | String |
-| `filterDepartments` | String |
-| `filterStatuses` | String |
-| `filterDateFrom` / `filterDateTo` | DateTime |
-| `filterSearch` | String |
-
-## Group 17: Advanced
-
-| Property | Default | Mô tả |
-|----------|---------|-------|
-| `licenseKey` | — | dhtmlx commercial license |
-| `advancedConfigJson` | — | Override dhtmlx config (JSON) |
-| `debugMode` | `false` | Console logging |
-| `refreshInterval` | `0` | Auto-refresh seconds; 0=off |
-
-## Development helpers
-
-| Property | Default | Mô tả |
-|----------|---------|-------|
-| `mockShouldFail` | `false` | Simulate load error |
-| `mockScenario` | `default` | `default` \| `empty` \| `performance` |
-
-## Cấu hình khuyến nghị
-
-### Executive portfolio demo
+### Permission model
 
 ```
-useMockData = true
-initialScale = week
-primaryGroupDimension = none
-showDimensionFilterBar = true
-enableDetailDialog = true
-readOnly = false
+readOnly = true  →  khóa tất cả (override mọi flag bên dưới)
+mayEdit  = false →  tương đương readOnly=true
 ```
 
-### Production Mendix
+`effectiveReadOnly = readOnly || !mayEdit`
 
-```
-useMockData = false
-tasksDataSource = [Task entity list]
-taskId, taskLabel, taskStart = mapped
-filterMode = client
-onTaskChanged = [Commit microflow]
-onBeforeTaskChange = [Validation microflow]
-taskVersion = mapped (conflict detection)
-```
+| Property | Type | Default | Mô tả |
+|----------|------|---------|-------|
+| `readOnly` | boolean | `false` | Khóa toàn bộ chỉnh sửa |
+| `mayEdit` | boolean | `true` | Master edit permission gate |
+| `dragMove` | boolean | `true` | Kéo task ngang (thay đổi ngày) |
+| `dragProgress` | boolean | `true` | Kéo handle progress |
+| `dragMultiple` | boolean | `true` | Multi-task drag |
+| `dragResize` | boolean | `true` | Resize duration task |
+| `gridResize` | boolean | `true` | Kéo thay đổi width cột grid |
+| `resizeRows` | boolean | `true` | Kéo thay đổi chiều cao row |
+| `sort` | boolean | `true` | Sắp xếp khi click tiêu đề cột |
+| `clickDrag` | boolean | `false` | Tạo task bằng click-drag trên timeline |
 
-### Resource timeline
+## Group 6: Events (Actions)
 
-```
-viewMode = resourceTimeline
-resourcesDataSource + assignmentsDataSource = configured
-enableDragMove = true (reassign via drag)
-```
+Tất cả là `type="action"`. Xem chi tiết context objects tại [07-events-and-actions.md](./07-events-and-actions.md).
+
+| Action | Trigger | Context type |
+|--------|---------|--------------|
+| `onTaskCreate` | Task mới được tạo | `TaskChangeContext` |
+| `onTaskResize` | Resize duration xong | `TaskChangeContext` |
+| `onTaskMove` | Drag move xong | `TaskChangeContext` |
+| `onTaskDbClick` | Double-click task bar | `TaskEventContext` |
+| `onTaskCheck` | Checkbox column toggle | `TaskEventContext` |
+| `onTaskUndo` | Undo operation | `TaskEventContext` |
+| `onTaskSelect` | Task selection thay đổi | `TaskEventContext` |
+| `onTaskRowDrag` | Row reorder trong grid | `TaskChangeContext` |
+
+> **Gợi ý:** `onTaskDbClick` → nanoflow mở page detail. `onTaskMove`/`onTaskResize` → microflow persist.
 
 ## Studio validation (editorConfig)
 
+File: `src/AxGantt.editorConfig.ts`
+
 | Code | Severity | Điều kiện |
 |------|----------|-----------|
-| S001 | error | `useMockData=false` nhưng không có tasksDataSource |
-| S002 | error | `resourceTimeline` without resourcesDataSource |
-| S003 | error | `advancedConfigJson` invalid JSON |
-| S004 | error | Missing taskId or taskStart mapping |
+| S001 | warning | `useMockData=false` và `taskListJson` chưa bind |
+
+## Cấu hình khuyến nghị
+
+### Development / demo
+
+```
+useMockData      = true
+ganttHeight      = 700
+defaultExpandTree= true
+enableMarker     = true
+readOnly         = false
+```
+
+### Production — full interaction
+
+```
+useMockData      = false
+taskListJson     = MF_BuildTaskListJson($Roadmap)
+scaleJson        = '{}'
+columnsJson      = MF_BuildColumnsJson()
+markerJson       = MF_BuildMarkerJson($Roadmap)
+ganttStartDate   = [%BeginOfCurrentYear%]
+ganttEndDate     = [%EndOfCurrentYear%]
+roadmapNo        = $Roadmap/DocumentNo
+roadmapRevision  = $Roadmap/Revision
+roadmapRevisedBy = $Roadmap/RevisedBy
+roadmapRevisedAt = $Roadmap/RevisedAt
+mayEdit          = $CurrentUser/CanEditRoadmap
+dragMove         = true
+dragResize       = true
+onTaskDbClick    = NF_ShowTaskDetail
+onTaskMove       = MF_PersistTaskMove
+onTaskResize     = MF_PersistTaskMove
+```
+
+### Read-only viewer
+
+```
+readOnly         = true
+taskListJson     = MF_BuildTaskListJson($Roadmap)
+enableMarker     = true
+markerJson       = MF_BuildMarkerJson($Roadmap)
+```

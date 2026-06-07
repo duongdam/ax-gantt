@@ -10,18 +10,6 @@
     </icon>
     <properties>
         <propertyGroup caption="General">
-            <property key="class" type="string" required="false">
-                <caption>Class</caption>
-                <description>CSS class</description>
-            </property>
-            <property key="style" type="string" required="false">
-                <caption>Style</caption>
-                <description>Inline style</description>
-            </property>
-            <property key="tabIndex" type="integer" defaultValue="0">
-                <caption>Tab index</caption>
-                <description>Focus order</description>
-            </property>
             <property key="useMockData" type="boolean" defaultValue="false">
                 <caption>Use mock data</caption>
                 <description>Load sample roadmap JSON for development</description>
@@ -90,11 +78,11 @@
         </propertyGroup>
 
         <propertyGroup caption="Display">
-            <property key="ganttWidth" type="integer" required="false" defaultValue="0">
+            <property key="ganttWidth" type="integer" required="true" defaultValue="0">
                 <caption>Gantt width</caption>
                 <description>Chart width in pixels (0 = auto)</description>
             </property>
-            <property key="ganttHeight" type="integer" required="false" defaultValue="600">
+            <property key="ganttHeight" type="integer" required="true" defaultValue="600">
                 <caption>Gantt height</caption>
                 <description>Chart height in pixels</description>
             </property>

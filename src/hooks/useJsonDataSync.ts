@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 
 import { getAxGanttRoadmapMock, MOCK_LOAD_DELAY_MS } from "../mock/axgantt-roadmap.mock";
-import type { JsonDataInput } from "../store/JsonDataStore";
-import { useJsonDataStore } from "../store/StoreContext";
+import type { JsonDataInput } from "../stores/JsonDataStore";
+import { useJsonDataStore } from "../stores/StoreContext";
 
 export interface UseJsonDataSyncOptions extends JsonDataInput {
     useMockData?: boolean;

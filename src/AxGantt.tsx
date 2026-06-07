@@ -10,7 +10,7 @@ import { WidgetErrorBoundary } from "./components/WidgetErrorBoundary";
 import type { AxGanttInteractionConfig } from "./engine/configBuilder";
 import type { FeatureRegistryOptions } from "./engine/FeatureRegistry";
 import { getAxGanttRoadmapMock } from "./mock/axgantt-roadmap.mock";
-import { createRootStore, StoreProvider } from "./store/StoreContext";
+import { createRootStore, StoreProvider } from "./stores/StoreContext";
 import { readDynamicDate, readDynamicString } from "./types/axganttRuntime";
 import { AxGanttContainerProps } from "../typings/AxGanttProps";
 import "./ui/AxGantt.css";
@@ -20,23 +20,31 @@ const AxGanttInner = observer((props: AxGanttContainerProps): ReactElement => {
     const scaleJson = readDynamicString(props.scaleJson);
     const columnsJson = readDynamicString(props.columnsJson);
     const markerJson = readDynamicString(props.markerJson);
-    const ganttStartDate = readDynamicDate(props.ganttStartDate);
-    const ganttEndDate = readDynamicDate(props.ganttEndDate);
+    const mockBundle = useMemo(
+        () => (props.useMockData ? getAxGanttRoadmapMock() : null),
+        [props.useMockData]
+    );
+
+    const ganttStartDate =
+        readDynamicDate(props.ganttStartDate) ??
+        (mockBundle ? new Date(mockBundle.ganttStartDate) : undefined);
+    const ganttEndDate =
+        readDynamicDate(props.ganttEndDate) ??
+        (mockBundle ? new Date(mockBundle.ganttEndDate) : undefined);
     const initialScroll = readDynamicDate(props.initialScroll);
 
     const effectiveReadOnly = props.readOnly || !props.mayEdit;
 
     const headerProps = useMemo(() => {
-        const mock = props.useMockData ? getAxGanttRoadmapMock() : null;
         return {
-            roadmapNo: readDynamicString(props.roadmapNo) ?? mock?.roadmapNo,
-            roadmapRevision: readDynamicString(props.roadmapRevision) ?? mock?.roadmapRevision,
-            roadmapRevisedBy: readDynamicString(props.roadmapRevisedBy) ?? mock?.roadmapRevisedBy,
+            roadmapNo: readDynamicString(props.roadmapNo) ?? mockBundle?.roadmapNo,
+            roadmapRevision: readDynamicString(props.roadmapRevision) ?? mockBundle?.roadmapRevision,
+            roadmapRevisedBy: readDynamicString(props.roadmapRevisedBy) ?? mockBundle?.roadmapRevisedBy,
             roadmapRevisedAt:
                 readDynamicDate(props.roadmapRevisedAt) ??
-                (mock?.roadmapRevisedAt ? new Date(mock.roadmapRevisedAt) : undefined)
+                (mockBundle?.roadmapRevisedAt ? new Date(mockBundle.roadmapRevisedAt) : undefined)
         };
-    }, [props.useMockData, props.roadmapNo, props.roadmapRevision, props.roadmapRevisedBy, props.roadmapRevisedAt]);
+    }, [mockBundle, props.roadmapNo, props.roadmapRevision, props.roadmapRevisedBy, props.roadmapRevisedAt]);
 
     const featureOptions = useMemo<FeatureRegistryOptions>(
         () => ({
@@ -109,12 +117,11 @@ const AxGanttInner = observer((props: AxGanttContainerProps): ReactElement => {
     };
 
     const rootStyle = useMemo(() => {
-        const base = props.style ?? {};
-        const layout: CSSProperties = { ...base };
-        if (props.ganttWidth && props.ganttWidth > 0) {
+        const layout: CSSProperties = { ...(props.style ?? {}) };
+        if (props.ganttWidth > 0) {
             layout.width = props.ganttWidth;
         }
-        if (props.ganttHeight && props.ganttHeight > 0) {
+        if (props.ganttHeight > 0) {
             layout.minHeight = props.ganttHeight;
         }
         return layout;
@@ -126,7 +133,7 @@ const AxGanttInner = observer((props: AxGanttContainerProps): ReactElement => {
             <GanttContainer
                 useMockData={props.useMockData}
                 readOnly={effectiveReadOnly}
-                ganttHeight={props.ganttHeight ?? 600}
+                ganttHeight={props.ganttHeight}
                 ganttWidth={props.ganttWidth}
                 defaultExpandTree={props.defaultExpandTree}
                 enableMarker={props.enableMarker}

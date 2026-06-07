@@ -2,12 +2,12 @@ import { gantt, type GanttStatic } from "dhtmlx-gantt";
 
 import { mapModelToDhtmlx } from "../adapters/mapAxGanttModel";
 import { modelTaskToGanttPatch } from "../adapters/mapTasksFromGantt";
-import type { AxGanttParsedModel, GanttNormalizedModel, GanttTask } from "../store/types";
-import type { ScalePayload } from "../store/types";
+import type { AxGanttParsedModel, GanttNormalizedModel, GanttTask } from "../stores/types";
+import type { ScalePayload } from "../stores/types";
 import { applyGanttConfig, type JsonGanttConfig, setGanttScale } from "./configBuilder";
 import type { FeatureRegistry } from "./FeatureRegistry";
 import { applyJsonMarkers, refreshTodayMarker } from "./plugins/markers";
-import type { GanttScale } from "../store/types";
+import type { GanttScale } from "../stores/types";
 import { getAdjacentScale } from "./zoomConfig";
 import type { ViewMode } from "./viewLayouts";
 

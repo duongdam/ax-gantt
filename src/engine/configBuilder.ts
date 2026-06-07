@@ -1,7 +1,7 @@
 import type { GanttStatic, Task } from "dhtmlx-gantt";
 
-import type { ColumnDef, ColumnsPayload, MarkerPayload, ScalePayload } from "../store/types";
-import type { GanttScale } from "../store/types";
+import type { ColumnDef, ColumnsPayload, MarkerPayload, ScalePayload } from "../stores/types";
+import type { GanttScale } from "../stores/types";
 import { getDefaultDhtmlxDateFormat } from "../utils/dates";
 import { applyInlineEditors } from "./editors/inlineEditors";
 import { applyLightboxConfig } from "./editors/lightboxConfig";

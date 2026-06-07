@@ -1,6 +1,6 @@
 import type { GanttStatic } from "dhtmlx-gantt";
 
-import type { ScalePayload, WeekLabelFormat } from "../store/types";
+import type { ScalePayload, WeekLabelFormat } from "../stores/types";
 import {
     EXECUTIVE_TIMELINE_ANCHOR_YEAR,
     formatExecutiveWeekLabel,

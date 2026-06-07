@@ -6,7 +6,7 @@ import type {
     GanttTask,
     JsonParseResult,
     TaskListPayload
-} from "../store/types";
+} from "../stores/types";
 
 const MAX_HIERARCHY_DEPTH = 5;
 

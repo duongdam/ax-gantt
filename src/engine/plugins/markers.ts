@@ -1,6 +1,6 @@
 import type { GanttStatic } from "dhtmlx-gantt";
 
-import type { MarkerDef, MarkerPayload } from "../../store/types";
+import type { MarkerDef, MarkerPayload } from "../../stores/types";
 
 const TODAY_MARKER_ID = "dhl-today-marker";
 const AXGANTT_MARKER_PREFIX = "axgantt-marker-";

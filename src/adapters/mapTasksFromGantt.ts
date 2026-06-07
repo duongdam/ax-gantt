@@ -1,6 +1,6 @@
 import type { Task } from "dhtmlx-gantt";
 
-import type { GanttTask } from "../store/types";
+import type { GanttTask } from "../stores/types";
 import { formatDhtmlxDate } from "../utils/dates";
 
 function parseGanttDate(value: Date | string | undefined): Date | undefined {
